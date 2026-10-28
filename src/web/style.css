@@ -1,0 +1,397 @@
+:root {
+  --bg: #172231;
+  --surface: #1d2a3c;
+  --hover: #22324a;
+  --line: #2c3d55;
+  --text: #e2e8f1;
+  --muted: #8c9bb2;
+  --link: #92c7f0;
+  --common: #9aa8bc;
+  --uncommon: #5cc8b0;
+  --rare: #e7b95b;
+  --danger: #f3a093;
+  --holo: linear-gradient(115deg, #f6a5c0, #f9e08b 25%, #9ee6c6 50%, #8fc3f7 75%, #c7a4f5);
+  --gutter: 16px;
+  --radius: 6px;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 15px/1.4 "Barlow", system-ui, sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Top bar */
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 14px var(--gutter) 10px;
+}
+
+h1 {
+  margin: 0;
+  font: 600 1.6rem/1.1 "Barlow Semi Condensed", sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.sync {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sync-date {
+  margin: 0;
+  color: var(--muted);
+}
+
+.sync-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger);
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--link);
+}
+
+.icon-button:disabled {
+  cursor: progress;
+  color: var(--muted);
+}
+
+.icon-button[aria-busy="true"] svg {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Filters */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  padding: 10px var(--gutter);
+  border-block: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.search {
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+
+.search input,
+.select select {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.search input::placeholder {
+  color: var(--muted);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.toggle input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--link);
+}
+
+.text-button {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Table */
+
+/*
+ * The table is laid out as a grid so that only the body scrolls: the header and
+ * the totals stay outside the scrolling area, so its scrollbars run beside the
+ * rows only. Every section shares one column template and reserves the
+ * scrollbar gutter so the columns stay aligned; main.ts mirrors the body's
+ * horizontal scroll onto the header and the totals.
+ */
+.table-wrap {
+  position: relative;
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+}
+
+table {
+  --columns: 56px minmax(180px, 2fr) minmax(160px, 1.6fr) minmax(150px, 1fr) 130px 96px 88px 112px 92px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  border-spacing: 0;
+}
+
+thead,
+tbody,
+tfoot {
+  display: grid;
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+
+/* Positioned so the screen-reader-only labels in its cells stay inside the scrolling area. */
+tbody {
+  position: relative;
+  overflow: auto;
+}
+
+tr {
+  display: grid;
+  grid-template-columns: var(--columns);
+  min-width: 1100px;
+}
+
+th,
+td {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+
+thead {
+  background: var(--surface);
+}
+
+thead th {
+  color: var(--muted);
+  font: 500 0.95rem/1.2 "Barlow Semi Condensed", sans-serif;
+}
+
+thead th button {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+thead th button:hover {
+  color: var(--text);
+}
+
+th[aria-sort] button {
+  color: var(--text);
+}
+
+th[aria-sort] button::after {
+  margin-left: 4px;
+  font-size: 0.8em;
+}
+
+th[aria-sort="ascending"] button::after {
+  content: "▲";
+}
+
+th[aria-sort="descending"] button::after {
+  content: "▼";
+}
+
+tbody tr:hover {
+  background: var(--hover);
+}
+
+tfoot {
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+tfoot td {
+  border-bottom: 0;
+  font-weight: 500;
+}
+
+#total-rows {
+  grid-column: span 6;
+}
+
+tfoot td:last-child {
+  grid-column: span 2;
+}
+
+.num {
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.missing {
+  color: var(--muted);
+}
+
+.col-icon {
+  padding-block: 4px;
+}
+
+.col-icon img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+/* Long Steam names wrap instead of widening the table. */
+.col-name,
+.col-game {
+  white-space: normal;
+}
+
+.col-name a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+.col-name a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.flag {
+  justify-content: center;
+}
+
+td.flag.yes {
+  color: var(--uncommon);
+}
+
+td.flag.no {
+  color: var(--muted);
+}
+
+td.flag svg {
+  vertical-align: middle;
+}
+
+.rarity::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--common);
+  vertical-align: 1px;
+}
+
+.rarity[data-rarity="peu commun"]::before {
+  background: var(--uncommon);
+}
+
+.rarity[data-rarity="rare"]::before {
+  background: var(--rare);
+}
+
+/* Foil cards: the one decorative flourish, a holographic chip that catches the light on hover. */
+.foil {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 3px;
+  background: var(--holo);
+  background-size: 250% 100%;
+  background-position: 0 0;
+  color: #1a2433;
+  font: 600 0.85rem/1.5 "Barlow Semi Condensed", sans-serif;
+  transition: background-position 0.6s ease;
+}
+
+tr:hover .foil {
+  background-position: 100% 0;
+}
+
+/* Overlays the empty table body, below the header row. */
+.empty {
+  position: absolute;
+  inset: 56px 0 auto;
+  padding: 48px var(--gutter);
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-button[aria-busy="true"] svg {
+    animation: none;
+  }
+
+  .foil {
+    transition: none;
+  }
+}

@@ -23,7 +23,6 @@ Usage personnel, lecture seule. Aucune action sur le compte : pas de vente, pas 
   - rareté
   - carte brillante (oui/non)
   - quantité possédée
-  - surplus (quantité − 1)
   - échangeable
   - vendable
   - prix de vente le plus bas
@@ -39,7 +38,7 @@ Usage personnel, lecture seule. Aucune action sur le compte : pas de vente, pas 
   - Brillante.
   - Échangeable ou vendable.
   - « Doublons uniquement » (quantité ≥ 2).
-- **Tri et totaux.** Tri sur toutes les colonnes ; sur une colonne de prix, les objets sans prix sont toujours en fin de liste. Totaux en pied de tableau : nombre d'objets, valeur totale, valeur du surplus. Les totaux de valeur ne portent que sur les objets chiffrés et l'indiquent (ex. « 12,40 € (35 / 2 249 objets chiffrés) »).
+- **Tri et totaux.** Tri sur toutes les colonnes ; sur une colonne de prix, les objets sans prix sont toujours en fin de liste. Totaux en pied de tableau : nombre d'objets, quantité totale, valeur totale. La valeur totale ne porte que sur les objets chiffrés et l'indique (ex. « 12,40 € (35 / 2 249 objets chiffrés) »).
 - **Prix à la demande.** Voir section 2.
 - **Rafraîchissement de l'inventaire.** Un bouton (même icône SVG que le rafraîchissement des prix, sans texte), avec l'horodatage de la dernière mise à jour. Il n'y a pas de rafraîchissement global des prix.
 

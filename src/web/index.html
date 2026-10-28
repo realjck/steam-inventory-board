@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Steam Inventory Board</title>
+    <script type="module" src="./main.ts"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Mon inventaire Steam</h1>
+      <div class="sync">
+        <p id="fetched-at" class="sync-date"></p>
+        <button id="refresh-inventory" class="icon-button" type="button" title="Rafraîchir l'inventaire" aria-label="Rafraîchir l'inventaire"></button>
+      </div>
+      <p id="sync-error" class="sync-error" role="alert" hidden></p>
+    </header>
+
+    <form id="filters" class="filters" role="search">
+      <label class="search">
+        <span class="visually-hidden">Rechercher un objet ou un jeu</span>
+        <input id="search" type="search" placeholder="Objet ou jeu…" autocomplete="off" />
+      </label>
+      <label class="select">
+        <span class="visually-hidden">Type</span>
+        <select id="type"><option value="">Tous les types</option></select>
+      </label>
+      <label class="select">
+        <span class="visually-hidden">Rareté</span>
+        <select id="rarity"><option value="">Toutes les raretés</option></select>
+      </label>
+      <label class="toggle"><input id="foil-only" type="checkbox" /> Brillantes</label>
+      <label class="toggle"><input id="duplicates-only" type="checkbox" /> Doublons</label>
+      <label class="toggle"><input id="tradable-only" type="checkbox" /> Échangeables</label>
+      <label class="toggle"><input id="marketable-only" type="checkbox" /> Vendables</label>
+      <button id="clear-filters" class="text-button" type="reset">Effacer les filtres</button>
+    </form>
+
+    <main class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col" class="col-icon"><span class="visually-hidden">Image</span></th>
+            <th scope="col" data-sort="name" class="col-name">Nom</th>
+            <th scope="col" data-sort="game" class="col-game">Jeu</th>
+            <th scope="col" data-sort="type">Type</th>
+            <th scope="col" data-sort="rarity">Rareté</th>
+            <th scope="col" data-sort="foil">Brillante</th>
+            <th scope="col" data-sort="quantity" class="num">Quantité</th>
+            <th scope="col" data-sort="tradable" class="flag">Échangeable</th>
+            <th scope="col" data-sort="marketable" class="flag">Vendable</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="6" id="total-rows"></td>
+            <td class="num" id="total-quantity"></td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+      <div id="empty" class="empty" hidden></div>
+    </main>
+  </body>
+</html>

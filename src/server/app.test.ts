@@ -1,5 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { buildApp } from "./app.ts";
 import { openDatabase, saveInventory } from "./db.ts";
 import type { InventoryPage, Item } from "./inventory.ts";
@@ -79,4 +82,16 @@ test("POST /api/refresh/inventory answers 502 and keeps the cache when Steam fai
   assert.match(res.json().error, /HTTP 403/);
   const cached = await app.inject({ method: "GET", url: "/api/items" });
   assert.equal(cached.json().fetchedAt, "2026-10-27T09:00:00.000Z");
+});
+
+test("GET / serves index.html from the web root", async (t) => {
+  const webRoot = mkdtempSync(join(tmpdir(), "sib-web-"));
+  writeFileSync(join(webRoot, "index.html"), "<!doctype html><title>Board</title>");
+  const app = buildApp({ db: openDatabase(":memory:"), fetchPages: async () => [], webRoot });
+  t.after(() => app.close());
+
+  const res = await app.inject({ method: "GET", url: "/" });
+
+  assert.equal(res.statusCode, 200);
+  assert.match(res.body, /<title>Board<\/title>/);
 });

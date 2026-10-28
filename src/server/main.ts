@@ -1,5 +1,6 @@
 /** Entry point: npm start, then open http://localhost:3000. */
 import { mkdirSync } from "node:fs";
+import { resolve } from "node:path";
 import { buildApp } from "./app.ts";
 import { openDatabase, loadInventory } from "./db.ts";
 import { fetchInventory } from "./inventory.ts";
@@ -17,7 +18,11 @@ const language = process.env.LANGUAGE ?? "french";
 
 mkdirSync("data", { recursive: true });
 const db = openDatabase("data/inventory.db");
-const app = buildApp({ db, fetchPages: () => fetchInventory(steamId, language) });
+const app = buildApp({
+  db,
+  fetchPages: () => fetchInventory(steamId, language),
+  webRoot: resolve("dist/web"),
+});
 
 if (loadInventory(db).fetchedAt === null) {
   console.log("Empty cache: fetching inventory from Steam...");

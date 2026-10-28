@@ -12,6 +12,7 @@
       <div class="sync">
         <p id="fetched-at" class="sync-date"></p>
         <button id="refresh-inventory" class="icon-button" type="button" title="Refresh inventory" aria-label="Refresh inventory"></button>
+        <button id="open-settings" class="icon-button" type="button" title="Settings" aria-label="Settings"></button>
       </div>
       <p id="sync-error" class="sync-error" role="alert" hidden></p>
     </header>
@@ -64,5 +65,19 @@
       </table>
       <div id="empty" class="empty" hidden></div>
     </main>
+
+    <section id="settings" class="settings" aria-labelledby="settings-title" hidden>
+      <form id="settings-form" class="settings-form" novalidate>
+        <h2 id="settings-title">Settings</h2>
+        <label for="steam-id">SteamID64</label>
+        <input id="steam-id" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="7656119…" aria-describedby="steam-id-help steam-id-error" />
+        <p id="steam-id-help" class="settings-help">Find it on your Steam profile page or with a SteamID lookup site. The inventory must be public.</p>
+        <p id="steam-id-error" class="settings-error" role="alert" hidden></p>
+        <div class="settings-actions">
+          <button id="save-settings" class="labelled-button" type="submit">Save</button>
+          <button id="cancel-settings" class="text-button" type="button">Cancel</button>
+        </div>
+      </form>
+    </section>
   </body>
 </html>

@@ -8,7 +8,8 @@ import type { BoardItem as Item } from "../core/items.ts";
 import { computeTotals, filterItems, sortItems, NO_FILTERS, type Filters, type SortDirection, type SortKey } from "../core/table.ts";
 import { createRow } from "./rows.ts";
 import { formatFetchedAt, formatTotals } from "../core/format.ts";
-import { REFRESH_ICON } from "./icons.ts";
+import { REFRESH_ICON, SETTINGS_ICON } from "./icons.ts";
+import { setupSettings } from "./settings.ts";
 import { describePriceError, priceStatuses, IDLE, type PriceState } from "../core/prices.ts";
 import { describeInventoryError } from "../core/messages.ts";
 import { InventoryError } from "../core/inventory.ts";
@@ -176,6 +177,25 @@ async function refreshInventory(): Promise<void> {
   }
 }
 
+/**
+ * Uses a new SteamID once its inventory loads. If it cannot (private inventory, typo), the previous
+ * SteamID is restored so the table and the stored account stay in step.
+ */
+async function changeSteamId(steamId: string): Promise<string | null> {
+  const previous = state.steamId || null;
+  if (steamId === previous && !(await board.inventoryIsStale())) return null;
+  await board.setSteamId(steamId);
+  try {
+    setInventory(await board.refreshInventory());
+    showSyncError(null);
+    return null;
+  } catch (error) {
+    if (previous) await board.setSteamId(previous);
+    const reason = error instanceof InventoryError ? error.reason : "unavailable";
+    return describeInventoryError(reason, (error as Error).message, false);
+  }
+}
+
 function setupSortHeaders(): void {
   for (const th of document.querySelectorAll<HTMLTableCellElement>("th[data-sort]")) {
     const button = document.createElement("button");
@@ -243,6 +263,10 @@ function syncHorizontalScroll(): void {
 async function start(): Promise<void> {
   els.refresh.innerHTML = REFRESH_ICON;
   els.refresh.addEventListener("click", refreshInventory);
+  const settings = setupSettings(changeSteamId);
+  const openSettings = $<HTMLButtonElement>("open-settings");
+  openSettings.innerHTML = SETTINGS_ICON;
+  openSettings.addEventListener("click", () => settings.show(state.steamId || null));
   setupSortHeaders();
   setupFilters();
   syncHorizontalScroll();
@@ -252,7 +276,8 @@ async function start(): Promise<void> {
     board = createBoard({ db: await openAppDatabase(), fetchFn: steamFetch, queue: new MarketQueue(MARKET_QUEUE) });
     const inventory = await board.load();
     setInventory(inventory);
-    if (inventory.steamId && (await board.inventoryIsStale())) await refreshInventory();
+    if (!inventory.steamId) settings.show(null);
+    else if (await board.inventoryIsStale()) await refreshInventory();
   } catch (error) {
     showSyncError(`The local database could not be opened: ${(error as Error).message}`);
   }

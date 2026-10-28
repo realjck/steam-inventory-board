@@ -20,6 +20,11 @@
   box-sizing: border-box;
 }
 
+/* Layout rules (display: grid / flex) must not override the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   height: 100dvh;
@@ -484,4 +489,62 @@ tr:hover .foil {
   color: var(--danger);
   font-size: 0.9rem;
   line-height: 1.2;
+}
+
+/* Settings: a plain form in the space the filters and the table use. */
+.settings {
+  grid-row: 2 / -1;
+  padding: 32px var(--gutter);
+  border-top: 1px solid var(--line);
+}
+
+.settings-form {
+  display: grid;
+  gap: 8px;
+  max-width: 440px;
+}
+
+.settings-form h2 {
+  margin: 0 0 8px;
+  font: 600 1.25rem/1.2 "Barlow Semi Condensed", sans-serif;
+}
+
+.settings-form label {
+  color: var(--muted);
+}
+
+.settings-form input {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-form input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.settings-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.settings-error {
+  margin: 0;
+  color: var(--danger);
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.settings-actions .labelled-button:disabled {
+  cursor: progress;
+  color: var(--muted);
 }

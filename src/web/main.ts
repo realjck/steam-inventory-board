@@ -75,8 +75,10 @@ function renderEmpty(visible: Item[]): void {
 
 function render(): void {
   const visible = sortItems(filterItems(state.items, state.filters), state.sort.key, state.sort.direction);
-  // Re-inserting the rows detaches them, which drops focus from any control inside.
+  // Re-inserting the rows detaches them, which drops focus from any control inside. Blur first:
+  // removing a focused element makes the browser lay out the emptied body and reset its scroll to the top.
   const focused = els.rows.contains(document.activeElement) ? (document.activeElement as HTMLElement) : null;
+  focused?.blur();
   els.rows.replaceChildren(...visible.map((item) => state.rows.get(item.marketHashName)!));
   if (focused?.isConnected) focused.focus({ preventScroll: true });
   renderEmpty(visible);

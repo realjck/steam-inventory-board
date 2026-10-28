@@ -1,5 +1,5 @@
 /** Pure table logic: filtering, sorting and footer totals. */
-import type { BoardItem as Item } from "../server/db.ts";
+import type { BoardItem as Item } from "./items.ts";
 
 export type Filters = {
   search: string;

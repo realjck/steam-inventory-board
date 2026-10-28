@@ -7,7 +7,6 @@
     "recon": "node --env-file=.env scripts/recon.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"src/**/*.test.ts\"",
-    "start": "vite build && node --env-file=.env src/server/main.ts",
     "build": "vite build",
     "dev": "vite"
   },
@@ -17,11 +16,7 @@
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.20.5",
     "typescript": "^7.0.2",
-    "vite": "^8.3.5"
-  },
-  "dependencies": {
-    "@fastify/static": "^10.1.8",
-    "better-sqlite3": "^13.0.3",
-    "fastify": "^5.12.7"
+    "vite": "^8.3.5",
+    "better-sqlite3": "^13.0.3"
   }
 }

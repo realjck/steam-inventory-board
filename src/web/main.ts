@@ -4,13 +4,13 @@ import "@fontsource/barlow/500.css";
 import "@fontsource/barlow-semi-condensed/500.css";
 import "@fontsource/barlow-semi-condensed/600.css";
 import "./style.css";
-import type { BoardItem as Item } from "../server/db.ts";
-import { computeTotals, filterItems, sortItems, NO_FILTERS, type Filters, type SortDirection, type SortKey } from "./table.ts";
+import type { BoardItem as Item } from "../core/items.ts";
+import { computeTotals, filterItems, sortItems, NO_FILTERS, type Filters, type SortDirection, type SortKey } from "../core/table.ts";
 import { createRow } from "./rows.ts";
-import { formatFetchedAt, formatTotals } from "./format.ts";
+import { formatFetchedAt, formatTotals } from "../core/format.ts";
 import { REFRESH_ICON } from "./icons.ts";
-import { describePriceError, priceStatuses, IDLE, type PriceState } from "./prices.ts";
-import { describeInventoryError } from "./messages.ts";
+import { describePriceError, priceStatuses, IDLE, type PriceState } from "../core/prices.ts";
+import { describeInventoryError } from "../core/messages.ts";
 
 type Inventory = { items: Item[]; fetchedAt: string | null; steamId: string };
 

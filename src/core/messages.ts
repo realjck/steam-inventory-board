@@ -1,5 +1,5 @@
 /** User-facing messages for inventory refresh failures. */
-import type { InventoryFailure } from "../server/inventory.ts";
+import type { InventoryFailure } from "./inventory.ts";
 
 const BY_REASON: Record<Exclude<InventoryFailure, "unavailable">, string> = {
   private:

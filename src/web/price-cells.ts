@@ -1,8 +1,8 @@
 /** Price cells of a row: sell, buy, and the fetch/refresh control with its state. */
-import type { BoardItem } from "../server/db.ts";
+import type { BoardItem } from "../core/items.ts";
 import { DOWNLOAD_ICON, REFRESH_ICON } from "./icons.ts";
-import { formatFetchedAt, formatPrice, formatShortDate } from "./format.ts";
-import type { PriceState } from "./prices.ts";
+import { formatFetchedAt, formatPrice, formatShortDate } from "../core/format.ts";
+import type { PriceState } from "../core/prices.ts";
 
 function cell(className: string): HTMLTableCellElement {
   const td = document.createElement("td");

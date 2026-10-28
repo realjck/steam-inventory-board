@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { filterItems, sortItems, computeTotals, NO_FILTERS, type Filters } from "./table.ts";
-import type { BoardItem as Item, Prices } from "../server/db.ts";
+import type { BoardItem as Item, Prices } from "./items.ts";
 
 function item(overrides: Partial<Item>): Item {
   return {

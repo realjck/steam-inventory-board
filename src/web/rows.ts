@@ -1,9 +1,9 @@
 /** Builds one table row per item; Steam strings are only ever set as text. */
-import type { BoardItem as Item } from "../server/db.ts";
+import type { BoardItem as Item } from "../core/items.ts";
 import { CHECK_ICON, COLLECTION_ICON } from "./icons.ts";
-import { collectionUrl, formatCount, marketUrl } from "./format.ts";
+import { collectionUrl, formatCount, marketUrl } from "../core/format.ts";
 import { priceCells } from "./price-cells.ts";
-import type { PriceState } from "./prices.ts";
+import type { PriceState } from "../core/prices.ts";
 
 const ICON_SIZE = "/64fx64f";
 

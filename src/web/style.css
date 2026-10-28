@@ -67,10 +67,24 @@ select {
   padding: 14px var(--gutter) 10px;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
 h1 {
   margin: 0;
   font: 600 1.6rem/1.1 "Barlow Semi Condensed", sans-serif;
   letter-spacing: 0.01em;
+}
+
+/* The custom URL name, beside the persona name: same line, quieter. */
+.owner-url {
+  color: var(--muted);
+  font: 500 1rem/1 "Barlow Semi Condensed", sans-serif;
+  letter-spacing: 0;
 }
 
 .sync {

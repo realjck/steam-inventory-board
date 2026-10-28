@@ -31,6 +31,7 @@ Usage personnel, lecture seule. Aucune action sur le compte : pas de vente, pas 
   - meilleur prix d'achat (buy order)
 
   Pas de prix médian ni de volume : pour le détail, on passe par le lien vers le marché.
+- **Titre.** « Real's inventory (realjck) » : pseudo Steam, puis le nom de l'URL personnalisée en petit sur la même ligne (absent s'il n'y en a pas). Lus dans `https://steamcommunity.com/profiles/{STEAM_ID64}?xml=1` (champs `steamID` et `customURL`) à chaque rafraîchissement de l'inventaire ; si le profil est illisible, « My Steam inventory ». Le bouton des réglages (icône engrenage) est en haut à gauche, devant le titre.
 - **Lien collection.** Première colonne : une icône SVG (2 × 2 carreaux) qui ouvre, dans un nouvel onglet, la page de badge du jeu de l'objet pour mon compte : `https://steamcommunity.com/profiles/{STEAM_ID64}/gamecards/{appid}` (Steam redirige vers l'URL personnalisée). L'appid vient du tag `Game` (`app_{appid}`). Pas d'icône pour les objets rattachés à Steam lui-même (appid 753, ex. gemmes).
 - **Lien marché.** Le nom de l'objet est un lien cliquable (nouvel onglet) vers sa page du marché Steam : `https://steamcommunity.com/market/listings/753/{market_hash_name encodé}`. Objet non vendable : pas de lien.
 - **Filtres.**
@@ -113,7 +114,7 @@ Les prix en cache s'affichent dès le démarrage. Si un prix est vieux, c'est la
 - **Démarrage instantané.** Le tableau s'affiche immédiatement depuis SQLite. L'inventaire n'est récupéré automatiquement que s'il n'a jamais été récupéré pour le SteamID enregistré (premier lancement, changement de compte, enregistrement interrompu) ; sinon, seulement via le bouton.
 - **Objets non vendables.** Pas de bouton ni de requête de prix ; afficher « — ».
 - **Aucun ordre en cours.** Si `amtMinSellOrder` ou `amtMaxBuyOrder` est absent, afficher « — » pour ce prix.
-- **CORS.** Steam n'autorise pas les appels depuis un navigateur : ils passent par le plugin `tauri-plugin-http` (côté Rust), limité aux URL de l'inventaire et du carnet d'ordres, sans cookies, et sans en-tête `Origin` (le carnet d'ordres répond 401 à l'origine de l'application).
+- **CORS.** Steam n'autorise pas les appels depuis un navigateur : ils passent par le plugin `tauri-plugin-http` (côté Rust), limité aux URL de l'inventaire, du carnet d'ordres et du profil XML, sans cookies, et sans en-tête `Origin` (le carnet d'ordres répond 401 à l'origine de l'application).
 
 ## Architecture
 

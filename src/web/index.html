@@ -8,11 +8,13 @@
   </head>
   <body>
     <header class="topbar">
-      <h1>My Steam inventory</h1>
+      <div class="brand">
+        <button id="open-settings" class="icon-button" type="button" title="Settings" aria-label="Settings"></button>
+        <h1><span id="owner-name">My Steam inventory</span> <small id="owner-url" class="owner-url" hidden></small></h1>
+      </div>
       <div class="sync">
         <p id="fetched-at" class="sync-date"></p>
         <button id="refresh-inventory" class="icon-button" type="button" title="Refresh inventory" aria-label="Refresh inventory"></button>
-        <button id="open-settings" class="icon-button" type="button" title="Settings" aria-label="Settings"></button>
       </div>
       <p id="sync-error" class="sync-error" role="alert" hidden></p>
     </header>

@@ -15,5 +15,7 @@ export const COLLECTION_ICON = svg(
 );
 
 export const SETTINGS_ICON = svg(
-  '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  // Eight-tooth wheel, outline computed from radii 7.4 (root) and 10 (tip) around (12, 12).
+  '<path d="M10.1 4.9L10.5 2.1L13.5 2.1L13.9 4.9L15.7 5.6L17.9 4.0L20.0 6.1L18.4 8.3L19.1 10.1L21.9 10.5L21.9 13.5L19.1 13.9L18.4 15.7L20.0 17.9L17.9 20.0L15.7 18.4L13.9 19.1L13.5 21.9L10.5 21.9L10.1 19.1L8.3 18.4L6.1 20.0L4.0 17.9L5.6 15.7L4.9 13.9L2.1 13.5L2.1 10.5L4.9 10.1L5.6 8.3L4.0 6.1L6.1 4.0L8.3 5.6Z"/>' +
+    '<circle cx="12" cy="12" r="3"/>',
 );

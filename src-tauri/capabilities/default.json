@@ -1,8 +1,10 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Cache database, Steam inventory and order book requests, Steam links in the browser",
-  "windows": ["main"],
+  "description": "Cache database, Steam inventory, order book and profile requests, Steam links in the browser",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "sql:default",
@@ -10,13 +12,24 @@
     {
       "identifier": "http:default",
       "allow": [
-        { "url": "https://steamcommunity.com/inventory/*" },
-        { "url": "https://steamcommunity.com/market/orderbook*" }
+        {
+          "url": "https://steamcommunity.com/inventory/*"
+        },
+        {
+          "url": "https://steamcommunity.com/market/orderbook*"
+        },
+        {
+          "url": "https://steamcommunity.com/profiles/*"
+        }
       ]
     },
     {
       "identifier": "opener:allow-open-url",
-      "allow": [{ "url": "https://steamcommunity.com/*" }]
+      "allow": [
+        {
+          "url": "https://steamcommunity.com/*"
+        }
+      ]
     }
   ]
 }

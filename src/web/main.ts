@@ -12,6 +12,7 @@ import { REFRESH_ICON, SETTINGS_ICON } from "./icons.ts";
 import { setupSettings } from "./settings.ts";
 import { describePriceError, priceStatuses, IDLE, type PriceState } from "../core/prices.ts";
 import { describeInventoryError, errorMessage } from "../core/messages.ts";
+import { inventoryTitle, type Profile } from "../core/profile.ts";
 import { InventoryError } from "../core/inventory.ts";
 import { MarketQueue } from "../core/queue.ts";
 import { createBoard, type Board, type Inventory } from "../app/board.ts";
@@ -152,8 +153,19 @@ function setInventory(inventory: Inventory): void {
   fillSelect(els.type, inventory.items.map((i) => i.type));
   fillSelect(els.rarity, inventory.items.map((i) => i.rarity));
   els.fetchedAt.textContent = inventory.fetchedAt ? `Inventory from ${formatFetchedAt(inventory.fetchedAt)}` : "";
+  renderOwner(inventory.profile);
   state.filters = readFilters();
   render();
+}
+
+/** "Real's inventory (realjck)": persona name, then the custom URL name in small type. */
+function renderOwner(profile: Profile | null): void {
+  const title = inventoryTitle(profile);
+  $<HTMLSpanElement>("owner-name").textContent = title;
+  const url = $<HTMLElement>("owner-url");
+  url.hidden = !profile?.customUrl;
+  url.textContent = profile?.customUrl ? `(${profile.customUrl})` : "";
+  document.title = `${title} - Steam Inventory Board`;
 }
 
 function showSyncError(message: string | null): void {

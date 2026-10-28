@@ -52,15 +52,9 @@ Usage personnel, lecture seule. Aucune action sur le compte : pas de vente, pas 
 - Progression des badges et sets incomplets (piste v2).
 - Récupération des prix en masse.
 
-## Configuration (`.env`)
+## Configuration
 
-```
-STEAM_ID64=7656119XXXXXXXXXX
-CURRENCY=3          # 3 = EUR
-LANGUAGE=english
-MARKET_INTERVAL_MS=3000  # délai minimal entre deux requêtes marché (optionnel)
-PORT=3000                # optionnel
-```
+Un seul réglage, saisi dans l'écran de réglages de l'application (affiché au premier lancement, puis accessible depuis l'en-tête) : le **SteamID64** (17 chiffres). Un nouveau SteamID n'est conservé que si son inventaire se charge. Données Steam demandées en anglais ; la devise est celle que Steam renvoie.
 
 L'inventaire doit être **public**.
 
@@ -76,7 +70,7 @@ L'inventaire doit être **public**.
 - **Pagination.** Tant que `more_items` est présent, rappeler l'endpoint avec `start_assetid={last_assetid}`.
 - **Limite.** `count` vaut au maximum 2000 : au-delà, Steam plafonne à 2000 ; à 5000, il répond HTTP 400.
 - **Doublons.** Regrouper les assets par `market_hash_name` (toujours présent ; un même nom peut correspondre à plusieurs `classid`/`instanceid`). Quantité = somme des `amount`.
-- **Filtres.** Les valeurs viennent de `descriptions[].tags[]` ; afficher `localized_tag_name` (dans la langue de `LANGUAGE`, ici l'anglais) :
+- **Filtres.** Les valeurs viennent de `descriptions[].tags[]` ; afficher `localized_tag_name` (données demandées en anglais) :
   - `item_class` : type (Trading Card, Profile Background, Emoticon, Booster Pack, Gems, etc.) ;
   - `droprate` : rareté (Common, Uncommon, Rare ; la couleur de la pastille dépend de ces libellés) ;
   - `cardborder` : `cardborder_1` (Foil) = brillante ;
@@ -89,7 +83,7 @@ L'inventaire doit être **public**.
 
 - C'est l'appel que fait le site du marché (refonte React) lui-même. Réponse : `{ data: { success, data: { amtMaxBuyOrder, amtMinSellOrder, eCurrency, ... } } }`.
 - `amtMinSellOrder` = prix de vente le plus bas, `amtMaxBuyOrder` = meilleur prix d'achat, en centimes.
-- **Devise.** Choisie par Steam (selon l'IP), pas par paramètre. Si `eCurrency` ≠ `CURRENCY`, ne rien enregistrer et afficher une erreur.
+- **Devise.** Choisie par Steam (selon l'IP), pas par paramètre. `eCurrency` est enregistré avec les prix et affiché via la table des codes devise Steam (ISO 4217) ; un code inconnu : rien n'est enregistré et une erreur s'affiche. Montants en centièmes de l'unité.
 - Une seule requête par objet pour les deux prix.
 
 **Abandonnés** (constaté à la reconnaissance) :
@@ -112,24 +106,25 @@ Les prix en cache s'affichent dès le démarrage. Si un prix est vieux, c'est la
   - une file d'attente avec throttle configurable (défaut : 1 requête / 3 s) ;
   - un backoff exponentiel sur HTTP 429 ;
   - jamais d'appels au marché en parallèle.
-- **Base locale SQLite** (ex. `better-sqlite3`), fichier unique dans `data/`. Elle stocke :
-  - l'inventaire ;
-  - les prix (vente et achat), sans TTL, avec leur horodatage `fetched_at`.
-- **Démarrage instantané.** Le tableau s'affiche immédiatement depuis SQLite. L'inventaire n'est récupéré automatiquement que si la base est vide (premier lancement) ou si `LANGUAGE` a changé depuis sa récupération (la langue est enregistrée avec le cache) ; sinon, seulement via le bouton.
+- **Base locale SQLite** (plugin `tauri-plugin-sql`), fichier unique dans le dossier de données de l'application (`%APPDATA%\com.realjck.steaminventoryboard\`). Elle stocke :
+  - l'inventaire, avec le SteamID pour lequel il a été récupéré ;
+  - les prix (vente et achat), sans TTL, avec leur devise et leur horodatage `fetched_at` ;
+  - le SteamID saisi dans les réglages.
+- **Démarrage instantané.** Le tableau s'affiche immédiatement depuis SQLite. L'inventaire n'est récupéré automatiquement que s'il n'a jamais été récupéré pour le SteamID enregistré (premier lancement, changement de compte, enregistrement interrompu) ; sinon, seulement via le bouton.
 - **Objets non vendables.** Pas de bouton ni de requête de prix ; afficher « — ».
 - **Aucun ordre en cours.** Si `amtMinSellOrder` ou `amtMaxBuyOrder` est absent, afficher « — » pour ce prix.
-- **CORS.** Tous les appels Steam passent par le backend local, jamais par le navigateur.
+- **CORS.** Steam n'autorise pas les appels depuis un navigateur : ils passent par le plugin `tauri-plugin-http` (côté Rust), limité aux URL de l'inventaire et du carnet d'ordres, sans cookies, et sans en-tête `Origin` (le carnet d'ordres répond 401 à l'origine de l'application).
 
-## Architecture proposée (ajustable)
+## Architecture
 
-- **Backend.** Node + TypeScript (Fastify ou Express). Il gère :
-  - le fetch Steam ;
-  - la file d'attente ;
-  - le cache ;
-  - une API REST locale : `GET /api/items`, `POST /api/refresh/inventory`, `POST /api/items/:id/prices` (récupère ou rafraîchit les prix d'un objet ; la réponse arrive quand la file d'attente l'a traité). Pas de `/api/status` : la page connaît ses propres demandes en cours, et la file sert dans l'ordre d'arrivée.
-- **Frontend.** Vite + TypeScript avec une lib de tableau (TanStack Table ou équivalent), servi par le backend.
-- **Lancement.** Une seule commande (`npm start`), puis ouvrir `http://localhost:3000`.
-- **Option.** Packaging Tauri plus tard ; ne pas en dépendre en v1.
+Application de bureau Tauri v2 (cadrage : `docs/superpowers/specs/2026-10-28-tauri-desktop-design.md`) :
+
+- `src/core` : logique pure (regroupement de l'inventaire, carnet d'ordres et devises, file d'attente, filtres, tri, formats, messages).
+- `src/data` : cache SQLite derrière une interface `SqlClient` (plugin SQL dans l'app, better-sqlite3 en mémoire dans les tests).
+- `src/app` : services de l'application (inventaire, prix à la demande, SteamID) et branchement des plugins Tauri.
+- `src/web` : interface (tableau, réglages), Vite + TypeScript sans framework.
+- `src-tauri` : coquille Rust (plugins sql, http, opener ; migration ; permissions ; CSP).
+- **Lancement.** `steam-inventory-board.exe` (ou l'installeur NSIS) ; en développement, `npm run tauri dev`.
 
 ## Jalons
 

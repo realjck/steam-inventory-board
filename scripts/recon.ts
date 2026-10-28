@@ -1,13 +1,13 @@
 /**
  * Milestone 1 recon: calls each Steam endpoint once, saves raw responses to
  * samples/ and prints what was learned about each [À VÉRIFIER] point of SPEC.md.
- * Usage: npm run recon (requires .env, see .env.example).
+ * Usage: npm run recon -- <SteamID64> (the inventory must be public).
  */
 import { mkdir, writeFile } from "node:fs/promises";
 
-const STEAM_ID64 = requireEnv("STEAM_ID64");
-const CURRENCY = process.env.CURRENCY ?? "3";
-const LANGUAGE = process.env.LANGUAGE ?? "english";
+const STEAM_ID64 = readSteamId(process.argv[2]);
+const CURRENCY = "3";
+const LANGUAGE = "english";
 
 const SAMPLES_DIR = "samples";
 const DELAY_MS = 3000;
@@ -32,9 +32,8 @@ type InventoryPage = {
 
 const findings: Record<string, unknown> = {};
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value || value.includes("X")) throw new Error(`Missing or placeholder ${name} in .env`);
+function readSteamId(value: string | undefined): string {
+  if (!value || !/^\d{17}$/.test(value)) throw new Error("Usage: npm run recon -- <17-digit SteamID64>");
   return value;
 }
 

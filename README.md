@@ -1,24 +1,25 @@
 # Steam Inventory Board
 
-Local, read-only board of a public Steam community inventory (cards, backgrounds, emoticons, boosters, gems): one sortable, filterable table with duplicates grouped and a link to each item's market page. See [SPEC.md](SPEC.md) (French) for the full specification.
+Windows desktop app (Tauri) that shows a public Steam community inventory (cards, backgrounds, emoticons, boosters, gems) in one sortable, filterable table: duplicates grouped, links to each item's market page and to your badge page, and lowest sell / highest buy prices fetched on demand. Read-only, no Steam login. See [SPEC.md](SPEC.md) (French) for the full specification.
 
-## Setup
+## Use
 
-Requires Node 22.18+ (runs TypeScript natively).
+Run `steam-inventory-board.exe` (or the `*-setup.exe` installer), then enter your SteamID64 in the settings screen. The inventory must be public.
+
+The inventory is cached in a SQLite file in `%APPDATA%\com.realjck.steaminventoryboard\`. Later starts show it at once; the refresh button fetches it again. Prices are never fetched automatically: each row has a button, and market requests go through a queue (one every 3 s, backing off on HTTP 429).
+
+## Develop
+
+Requires Node 22.18+ (runs TypeScript natively) and the Rust toolchain.
 
 ```sh
 npm install
-cp .env.example .env   # then set STEAM_ID64; the inventory must be public
-npm start              # builds the page, then serves http://localhost:3000
+npm run tauri dev     # app window with hot reload
+npm run tauri build   # src-tauri/target/release/steam-inventory-board.exe + NSIS installer
 ```
 
-The first start fetches the inventory from Steam and caches it in `data/`. Later starts read the cache, unless `LANGUAGE` changed since it was fetched; use the refresh button to fetch it again.
-
-Prices are never fetched automatically: each row has a button that fetches its lowest sell and highest buy price. Market requests go through a queue (one every `MARKET_INTERVAL_MS`, 3000 by default) that backs off on HTTP 429. `PORT` (default 3000) is optional too.
-
-## Scripts
-
-- `npm test`: unit tests (`node:test`)
+- `npm test`: unit tests (`node:test`; the store runs against an in-memory SQLite)
 - `npm run typecheck`: TypeScript check
-- `npm run dev`: Vite dev server with hot reload (run `npm start` alongside for the API)
-- `npm run recon`: re-checks the undocumented Steam endpoints and saves raw responses to `samples/`
+- `npm run recon -- <SteamID64>`: re-checks the undocumented Steam endpoints and saves raw responses to `samples/`
+
+Layout: `src/core` pure logic, `src/data` SQLite store, `src/app` app services (Steam calls, queue, Tauri plugins), `src/web` interface, `src-tauri` Rust shell (plugins, migration, permissions).

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "recon": "node --env-file=.env scripts/recon.ts",
+    "recon": "node scripts/recon.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"src/**/*.test.ts\"",
     "build": "vite build",

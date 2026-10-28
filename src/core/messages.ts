@@ -11,3 +11,8 @@ export function describeInventoryError(reason: InventoryFailure, message: string
   const text = reason === "unavailable" ? `Refresh failed: ${message}.` : BY_REASON[reason];
   return hasCache ? `${text} The table shows the cached inventory.` : text;
 }
+
+/** Tauri plugins reject with plain strings, not Error objects. */
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}

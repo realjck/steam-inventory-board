@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { describeInventoryError } from "./messages.ts";
+import { describeInventoryError, errorMessage } from "./messages.ts";
 
 test("describeInventoryError tells how to make a private inventory visible", () => {
   assert.equal(
@@ -22,4 +22,9 @@ test("describeInventoryError passes other failures through", () => {
 
 test("describeInventoryError says the table still shows the cache", () => {
   assert.match(describeInventoryError("unavailable", "fetch failed", true), / The table shows the cached inventory\.$/);
+});
+
+test("errorMessage reads Error objects and the plain strings Tauri plugins reject with", () => {
+  assert.equal(errorMessage(new Error("Inventory request failed: HTTP 500")), "Inventory request failed: HTTP 500");
+  assert.equal(errorMessage("error sending request for url (https://steamcommunity.com/inventory/…)"), "error sending request for url (https://steamcommunity.com/inventory/…)");
 });

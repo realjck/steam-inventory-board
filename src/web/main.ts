@@ -11,7 +11,7 @@ import { formatFetchedAt, formatTotals } from "../core/format.ts";
 import { REFRESH_ICON, SETTINGS_ICON } from "./icons.ts";
 import { setupSettings } from "./settings.ts";
 import { describePriceError, priceStatuses, IDLE, type PriceState } from "../core/prices.ts";
-import { describeInventoryError } from "../core/messages.ts";
+import { describeInventoryError, errorMessage } from "../core/messages.ts";
 import { InventoryError } from "../core/inventory.ts";
 import { MarketQueue } from "../core/queue.ts";
 import { createBoard, type Board, type Inventory } from "../app/board.ts";
@@ -170,7 +170,7 @@ async function refreshInventory(): Promise<void> {
     setInventory(await board.refreshInventory());
   } catch (error) {
     const reason = error instanceof InventoryError ? error.reason : "unavailable";
-    showSyncError(describeInventoryError(reason, (error as Error).message, hasCache));
+    showSyncError(describeInventoryError(reason, errorMessage(error), hasCache));
   } finally {
     els.refresh.disabled = false;
     els.refresh.removeAttribute("aria-busy");
@@ -192,7 +192,7 @@ async function changeSteamId(steamId: string): Promise<string | null> {
   } catch (error) {
     if (previous) await board.setSteamId(previous);
     const reason = error instanceof InventoryError ? error.reason : "unavailable";
-    return describeInventoryError(reason, (error as Error).message, false);
+    return describeInventoryError(reason, errorMessage(error), false);
   }
 }
 
@@ -279,7 +279,7 @@ async function start(): Promise<void> {
     if (!inventory.steamId) settings.show(null);
     else if (await board.inventoryIsStale()) await refreshInventory();
   } catch (error) {
-    showSyncError(`The local database could not be opened: ${(error as Error).message}`);
+    showSyncError(`The local database could not be opened: ${errorMessage(error)}`);
   }
 }
 

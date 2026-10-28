@@ -1,5 +1,6 @@
 /** Page-side state of the on-demand price requests (the market queue runs them in order). */
 import { RateLimitError } from "./market.ts";
+import { errorMessage } from "./messages.ts";
 
 export type PriceState =
   | { status: "idle" }
@@ -16,5 +17,5 @@ export function priceStatuses(pending: string[]): Map<string, "loading" | "queue
 
 export function describePriceError(error: unknown): string {
   if (error instanceof RateLimitError) return "Steam is rate limiting requests, try again later";
-  return `Failed: ${error instanceof Error ? error.message : String(error)}`;
+  return `Failed: ${errorMessage(error)}`;
 }

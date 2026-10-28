@@ -40,11 +40,18 @@ const orderBook = (sell: number, buy: number) =>
   json({ data: { success: true, data: { eCurrency: 3, amtMinSellOrder: sell, amtMaxBuyOrder: buy } } });
 
 /** Fake Steam: inventory pages and order books served from the given handlers, every URL recorded. */
-function fakeSteam(handlers: { inventory?: () => Response; orderBook?: (hash: string) => Promise<Response> | Response }) {
+const PROFILE_XML = "<profile><steamID><![CDATA[Real]]></steamID><customURL><![CDATA[realjck]]></customURL></profile>";
+
+function fakeSteam(handlers: {
+  inventory?: () => Response;
+  orderBook?: (hash: string) => Promise<Response> | Response;
+  profile?: () => Response;
+}) {
   const urls: string[] = [];
   const fetchFn: FetchFn = async (url) => {
     urls.push(url);
     if (url.includes("/inventory/")) return (handlers.inventory ?? (() => json(page("281750-Sól"))))();
+    if (url.includes("/profiles/")) return (handlers.profile ?? (() => new Response(PROFILE_XML)))();
     const hash = JSON.parse(new URL(url).searchParams.get("qp")!)[1] as string;
     return (handlers.orderBook ?? (() => orderBook(13, 12)))(hash);
   };
@@ -61,7 +68,7 @@ async function setup(steam = fakeSteam({}), withSteamId = true) {
 test("load returns the cached inventory and the SteamID without calling Steam", async () => {
   const { board, steam } = await setup();
 
-  assert.deepEqual(await board.load(), { items: [], fetchedAt: null, steamId: STEAM_ID });
+  assert.deepEqual(await board.load(), { items: [], fetchedAt: null, steamId: STEAM_ID, profile: null });
   assert.equal(steam.urls.length, 0);
 });
 
@@ -191,4 +198,25 @@ test("inventory refreshes run one after another, so their saves never interleave
   assert.equal(maxInFlight, 1);
   assert.deepEqual((await board.load()).items.map((i) => i.marketHashName), ["281750-Hugin"]);
   assert.equal(await board.inventoryIsStale(), false);
+});
+
+test("refreshInventory also stores the owner's profile names", async () => {
+  const { board } = await setup();
+
+  const inventory = await board.refreshInventory();
+
+  assert.deepEqual(inventory.profile, { personaName: "Real", customUrl: "realjck" });
+  assert.deepEqual((await board.load()).profile, inventory.profile);
+});
+
+test("refreshInventory still succeeds when the profile cannot be read, without a stale name", async () => {
+  let profileStatus = 200;
+  const { board } = await setup(fakeSteam({ profile: () => (profileStatus === 200 ? new Response(PROFILE_XML) : json(null, profileStatus)) }));
+  await board.refreshInventory();
+  profileStatus = 500;
+
+  const inventory = await board.refreshInventory();
+
+  assert.equal(inventory.items.length, 1);
+  assert.equal(inventory.profile, null);
 });

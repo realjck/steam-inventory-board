@@ -2,6 +2,7 @@
 import type { Item } from "../core/inventory.ts";
 import type { BoardItem, Prices } from "../core/items.ts";
 import type { OrderBookPrices } from "../core/market.ts";
+import type { Profile } from "../core/profile.ts";
 import type { SqlClient } from "./sql-client.ts";
 
 /** 500 rows of 11 columns stay far below SQLite's limit on bound parameters. */
@@ -155,4 +156,17 @@ export async function setSetting(db: SqlClient, key: SettingKey, value: string):
 export async function inventoryIsStale(db: SqlClient, steamId: string): Promise<boolean> {
   const fetchedAt = await getMeta(db, "inventory_fetched_at");
   return fetchedAt === null || (await getMeta(db, "inventory_steam_id")) !== steamId;
+}
+
+/** The owner's names, replaced on each inventory refresh; null when the profile could not be read. */
+export async function saveProfile(db: SqlClient, profile: Profile | null): Promise<void> {
+  await db.execute("DELETE FROM meta WHERE key IN ('profile_persona_name', 'profile_custom_url')");
+  if (!profile) return;
+  await setMeta(db, "profile_persona_name", profile.personaName);
+  if (profile.customUrl) await setMeta(db, "profile_custom_url", profile.customUrl);
+}
+
+export async function loadProfile(db: SqlClient): Promise<Profile | null> {
+  const personaName = await getMeta(db, "profile_persona_name");
+  return personaName ? { personaName, customUrl: await getMeta(db, "profile_custom_url") } : null;
 }

@@ -1,6 +1,7 @@
 /** What the page asks of the app: the cached inventory, inventory refreshes, on-demand prices, the SteamID. */
 import { fetchInventory, groupItems } from "../core/inventory.ts";
 import { fetchOrderBook } from "../core/market.ts";
+import { fetchProfile, type Profile } from "../core/profile.ts";
 import type { BoardItem } from "../core/items.ts";
 import type { MarketQueue } from "../core/queue.ts";
 import type { SqlClient } from "../data/sql-client.ts";
@@ -11,7 +12,12 @@ export type FetchFn = (url: string, init?: { headers?: Record<string, string> })
 /** Steam data language; the interface is in English. */
 const LANGUAGE = "english";
 
-export type Inventory = { items: BoardItem[]; fetchedAt: string | null; steamId: string | null };
+export type Inventory = {
+  items: BoardItem[];
+  fetchedAt: string | null;
+  steamId: string | null;
+  profile: Profile | null;
+};
 
 export interface Board {
   load(): Promise<Inventory>;
@@ -36,7 +42,11 @@ export function createBoard({ db, fetchFn, queue, now = () => new Date() }: Boar
   let refreshes: Promise<unknown> = Promise.resolve();
 
   async function load(): Promise<Inventory> {
-    return { ...(await store.loadInventory(db)), steamId: await store.getSetting(db, "steam_id") };
+    return {
+      ...(await store.loadInventory(db)),
+      steamId: await store.getSetting(db, "steam_id"),
+      profile: await store.loadProfile(db),
+    };
   }
 
   async function requireItem(marketHashName: string): Promise<BoardItem> {
@@ -58,6 +68,8 @@ export function createBoard({ db, fetchFn, queue, now = () => new Date() }: Boar
     if (!steamId) throw new Error("No SteamID set");
     const items = groupItems(await fetchInventory(steamId, LANGUAGE, fetchFn));
     await store.saveInventory(db, items, now().toISOString(), steamId);
+    // The title is a nicety: an unreadable profile must not fail the refresh, nor keep a stale name.
+    await store.saveProfile(db, await fetchProfile(steamId, fetchFn).catch(() => null));
     return load();
   }
 

@@ -1,6 +1,6 @@
 [package]
 name = "steam-inventory-board"
-version = "1.0.0"
+version = "1.0.1"
 description = "Local, read-only board of a public Steam community inventory"
 authors = ["jck"]
 edition = "2024"

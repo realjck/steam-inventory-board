@@ -17,6 +17,7 @@
 
 - Tauri plugins reject with plain strings, not `Error`: read messages with `errorMessage()` (`src/core/messages.ts`).
 - In tests, better-sqlite3 binds the store's `$N` placeholders by name (`src/data/memory-client.ts`).
+- `src/data/schema.sql` is migration 1, checksummed by the SQL plugin: never edit it, not even its line endings (`.gitattributes` forces LF), or existing databases make the app panic at startup. Schema changes go in a new migration.
 - The user's real cache is `%APPDATA%\com.realjck.steaminventoryboard\steam-inventory-board.db`: never delete it to test.
 
 ## Checking the real app

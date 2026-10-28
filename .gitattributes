@@ -1,0 +1,3 @@
+# Migration SQL is embedded in the app and checksummed by the Tauri SQL plugin: its bytes must
+# not depend on the checkout's line-ending settings.
+*.sql text eol=lf

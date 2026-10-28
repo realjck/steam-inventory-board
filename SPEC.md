@@ -132,10 +132,10 @@ Les prix en cache s'affichent dès le démarrage. Si un prix est vieux, c'est la
 ## Jalons
 
 1. ~~**Script de reconnaissance.**~~ Fait (voir « Sources de données »).
-2. Fetch de l'inventaire, regroupement des doublons, cache SQLite, `GET /api/items`.
-3. Tableau, filtres, tri, totaux, lien marché (sans prix).
-4. Prix à la demande : bouton par ligne, file d'attente, throttle, backoff, cache SQLite, date affichée.
-5. Gestion des erreurs et finitions (états d'attente, erreurs de devise, inventaire privé).
+2. ~~Fetch de l'inventaire, regroupement des doublons, cache SQLite, `GET /api/items`.~~ Fait.
+3. ~~Tableau, filtres, tri, totaux, lien marché (sans prix).~~ Fait.
+4. ~~Prix à la demande : bouton par ligne, file d'attente, throttle, backoff, cache SQLite, date affichée.~~ Fait, avec le lien collection.
+5. ~~Gestion des erreurs et finitions (états d'attente, erreurs de devise, inventaire privé).~~ Fait : message dédié pour un inventaire privé ou introuvable (HTTP 403/404) et pour la limite de requêtes d'inventaire (429), focus clavier conservé pendant une demande de prix.
 
 ## Critères d'acceptation
 

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fetchInventory, groupItems, type InventoryPage, type Description } from "./inventory.ts";
+import { fetchInventory, groupItems, InventoryError, type InventoryPage, type Description } from "./inventory.ts";
 
 function description(overrides: Partial<Description>): Description {
   return {
@@ -102,8 +102,25 @@ test("fetchInventory follows pagination with start_assetid", async () => {
   assert.equal(urls[1], "https://steamcommunity.com/inventory/765/753/6?l=french&count=2000&start_assetid=10");
 });
 
-test("fetchInventory rejects with the HTTP status when Steam refuses", async () => {
-  const fakeFetch = async () => jsonResponse(null, 403);
+async function failureReason(status: number): Promise<{ reason: string; message: string }> {
+  try {
+    await fetchInventory("765", "french", async () => jsonResponse(null, status));
+  } catch (error) {
+    assert.ok(error instanceof InventoryError);
+    return { reason: error.reason, message: error.message };
+  }
+  throw new Error("fetchInventory did not reject");
+}
 
-  await assert.rejects(fetchInventory("765", "french", fakeFetch), /HTTP 403/);
+test("fetchInventory reports a private or missing inventory on HTTP 403 and 404", async () => {
+  assert.equal((await failureReason(403)).reason, "private");
+  assert.equal((await failureReason(404)).reason, "private");
+});
+
+test("fetchInventory reports Steam rate limiting on HTTP 429", async () => {
+  assert.equal((await failureReason(429)).reason, "rate-limited");
+});
+
+test("fetchInventory reports other HTTP errors with their status", async () => {
+  assert.deepEqual(await failureReason(500), { reason: "unavailable", message: "Inventory request failed: HTTP 500" });
 });

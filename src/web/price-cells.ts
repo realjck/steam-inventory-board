@@ -52,6 +52,8 @@ function statusText(text: string, className: string): HTMLSpanElement {
 
 function controlCell(item: BoardItem, state: PriceState): HTMLTableCellElement {
   const td = cell("col-prices");
+  // Focusable by script only, so focus has somewhere to stay while no button is shown.
+  td.tabIndex = -1;
   if (state.status === "loading") {
     const spinner = statusText("", "spinner");
     spinner.innerHTML = REFRESH_ICON;

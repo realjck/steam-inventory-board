@@ -2,7 +2,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifyStatic from "@fastify/static";
 import { saveInventory, loadInventory, loadItem, savePrices, type BoardItem, type Db } from "./db.ts";
-import { groupItems, type InventoryPage } from "./inventory.ts";
+import { groupItems, InventoryError, type InventoryPage } from "./inventory.ts";
 import { RateLimitError, type OrderBookPrices } from "./market.ts";
 
 export type AppDeps = {
@@ -47,7 +47,8 @@ export function buildApp({ db, fetchPages, fetchPrices, steamId, now = () => new
       saveInventory(db, items, now().toISOString());
       return inventory();
     } catch (error) {
-      return reply.code(502).send({ error: (error as Error).message });
+      const reason = error instanceof InventoryError ? error.reason : "unavailable";
+      return reply.code(502).send({ error: (error as Error).message, reason });
     }
   });
 

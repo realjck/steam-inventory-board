@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildApp } from "./app.ts";
 import { openDatabase, saveInventory } from "./db.ts";
-import type { InventoryPage, Item } from "./inventory.ts";
+import { InventoryError, type InventoryPage, type Item } from "./inventory.ts";
 
 const NOW = new Date("2026-10-28T14:32:00.000Z");
 const noPrices = async () => ({ sell: null, buy: null });
@@ -75,7 +75,7 @@ test("POST /api/refresh/inventory fetches, caches and returns the new inventory"
 
 test("POST /api/refresh/inventory answers 502 and keeps the cache when Steam fails", async (t) => {
   const { db, app } = setup(async () => {
-    throw new Error("Inventory request failed: HTTP 403");
+    throw new InventoryError(403);
   });
   t.after(() => app.close());
   saveInventory(db, [], "2026-10-27T09:00:00.000Z");
@@ -83,9 +83,20 @@ test("POST /api/refresh/inventory answers 502 and keeps the cache when Steam fai
   const res = await app.inject({ method: "POST", url: "/api/refresh/inventory" });
 
   assert.equal(res.statusCode, 502);
-  assert.match(res.json().error, /HTTP 403/);
+  assert.deepEqual(res.json(), { error: "Inventory request failed: HTTP 403", reason: "private" });
   const cached = await app.inject({ method: "GET", url: "/api/items" });
   assert.equal(cached.json().fetchedAt, "2026-10-27T09:00:00.000Z");
+});
+
+test("POST /api/refresh/inventory reports unexpected failures as unavailable", async (t) => {
+  const { app } = setup(async () => {
+    throw new Error("fetch failed");
+  });
+  t.after(() => app.close());
+
+  const res = await app.inject({ method: "POST", url: "/api/refresh/inventory" });
+
+  assert.deepEqual(res.json(), { error: "fetch failed", reason: "unavailable" });
 });
 
 test("GET / serves index.html from the web root", async (t) => {

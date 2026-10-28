@@ -93,13 +93,27 @@ function inventoryUrl(steamId: string, language: string, startAssetId?: string):
   return startAssetId ? `${url}&start_assetid=${startAssetId}` : url;
 }
 
+/** Why Steam refused the inventory, so the page can tell the user what to do. */
+export type InventoryFailure = "private" | "rate-limited" | "unavailable";
+
+export class InventoryError extends Error {
+  readonly reason: InventoryFailure;
+
+  constructor(status: number) {
+    super(`Inventory request failed: HTTP ${status}`);
+    this.name = "InventoryError";
+    // A private inventory answers 403; one that cannot be seen at all answers 404 with "null".
+    this.reason = status === 403 || status === 404 ? "private" : status === 429 ? "rate-limited" : "unavailable";
+  }
+}
+
 /** Downloads every inventory page; the inventory must be public. */
 export async function fetchInventory(steamId: string, language: string, fetchFn: FetchFn = fetch): Promise<InventoryPage[]> {
   const pages: InventoryPage[] = [];
   let start: string | undefined;
   do {
     const res = await fetchFn(inventoryUrl(steamId, language, start));
-    if (!res.ok) throw new Error(`Inventory request failed: HTTP ${res.status}`);
+    if (!res.ok) throw new InventoryError(res.status);
     const page = (await res.json()) as InventoryPage;
     pages.push(page);
     start = page.more_items ? page.last_assetid : undefined;

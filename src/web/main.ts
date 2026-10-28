@@ -10,6 +10,7 @@ import { createRow } from "./rows.ts";
 import { formatFetchedAt, formatTotals } from "./format.ts";
 import { REFRESH_ICON } from "./icons.ts";
 import { describePriceError, priceStatuses, IDLE, type PriceState } from "./prices.ts";
+import { describeInventoryError } from "./messages.ts";
 
 type Inventory = { items: Item[]; fetchedAt: string | null; steamId: string };
 
@@ -74,7 +75,10 @@ function renderEmpty(visible: Item[]): void {
 
 function render(): void {
   const visible = sortItems(filterItems(state.items, state.filters), state.sort.key, state.sort.direction);
+  // Re-inserting the rows detaches them, which drops focus from any control inside.
+  const focused = els.rows.contains(document.activeElement) ? (document.activeElement as HTMLElement) : null;
   els.rows.replaceChildren(...visible.map((item) => state.rows.get(item.marketHashName)!));
+  if (focused?.isConnected) focused.focus({ preventScroll: true });
   renderEmpty(visible);
 
   const totals = computeTotals(visible);
@@ -93,9 +97,18 @@ function updateRows(hashes: string[]): void {
     const item = state.items.find((i) => i.marketHashName === hash);
     if (!item) continue;
     const row = createRow(item, priceStateOf(hash), state.steamId);
-    state.rows.get(hash)?.replaceWith(row);
+    const old = state.rows.get(hash);
+    const hadFocus = old?.contains(document.activeElement) ?? false;
+    old?.replaceWith(row);
     state.rows.set(hash, row);
+    if (hadFocus) focusPriceControl(row);
   }
+}
+
+/** Keeps keyboard focus on the price control while its row is rebuilt between request states. */
+function focusPriceControl(row: HTMLTableRowElement): void {
+  const target = row.querySelector<HTMLElement>("button[data-action=prices]") ?? row.querySelector<HTMLElement>(".col-prices");
+  target?.focus({ preventScroll: true });
 }
 
 async function requestPrices(hash: string): Promise<void> {
@@ -143,13 +156,14 @@ async function refreshInventory(): Promise<void> {
   els.refresh.disabled = true;
   els.refresh.setAttribute("aria-busy", "true");
   showSyncError(null);
+  const hasCache = state.items.length > 0;
   try {
     const res = await fetch("/api/refresh/inventory", { method: "POST" });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.error);
-    setInventory(body as Inventory);
-  } catch (error) {
-    showSyncError(`Le rafraîchissement a échoué : ${(error as Error).message}. L'inventaire affiché est celui du cache.`);
+    if (res.ok) setInventory(body as Inventory);
+    else showSyncError(describeInventoryError(body.reason, body.error, hasCache));
+  } catch {
+    showSyncError(describeInventoryError("unavailable", "le serveur local ne répond pas", hasCache));
   } finally {
     els.refresh.disabled = false;
     els.refresh.removeAttribute("aria-busy");

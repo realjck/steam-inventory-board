@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "steam-inventory-board",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "com.realjck.steaminventoryboard",
   "build": {
     "frontendDist": "../dist/web",

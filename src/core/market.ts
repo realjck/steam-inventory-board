@@ -21,7 +21,7 @@ type OrderBookResponse = {
   };
 };
 
-// Endpoint used by the redesigned market pages themselves (see SPEC.md, "Sources de données").
+// Endpoint used by the redesigned market pages themselves (see README.md, "Steam data").
 function orderBookUrl(marketHashName: string): string {
   const url = new URL("https://steamcommunity.com/market/orderbook");
   url.searchParams.set("q", "Load");

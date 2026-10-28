@@ -1,6 +1,6 @@
 /**
  * Milestone 1 recon: calls each Steam endpoint once, saves raw responses to
- * samples/ and prints what was learned about each [À VÉRIFIER] point of SPEC.md.
+ * samples/ and prints what was learned about each endpoint (see README.md, "Steam data").
  * Usage: npm run recon -- <SteamID64> (the inventory must be public).
  */
 import { mkdir, writeFile } from "node:fs/promises";

@@ -11,8 +11,16 @@ import { formatFetchedAt, formatTotals } from "../core/format.ts";
 import { REFRESH_ICON } from "./icons.ts";
 import { describePriceError, priceStatuses, IDLE, type PriceState } from "../core/prices.ts";
 import { describeInventoryError } from "../core/messages.ts";
+import { InventoryError } from "../core/inventory.ts";
+import { MarketQueue } from "../core/queue.ts";
+import { createBoard, type Board, type Inventory } from "../app/board.ts";
+import { openAppDatabase, steamFetch } from "../app/tauri.ts";
 
-type Inventory = { items: Item[]; fetchedAt: string | null; steamId: string };
+/** Market pacing: one request at a time, 3 s apart, backing off 30 s, 60 s, 120 s on HTTP 429. */
+const MARKET_QUEUE = { intervalMs: 3000, backoffMs: 30_000, maxRetries: 3 };
+
+let board: Board;
+
 
 const state = {
   items: [] as Item[],
@@ -119,12 +127,10 @@ async function requestPrices(hash: string): Promise<void> {
   state.priceErrors.delete(hash);
   updateRows([hash]);
   try {
-    const res = await fetch(`/api/items/${encodeURIComponent(hash)}/prices`, { method: "POST" });
-    const body = await res.json();
-    if (!res.ok) state.priceErrors.set(hash, describePriceError(res.status, body.error));
-    else state.items = state.items.map((i) => (i.marketHashName === hash ? (body as Item) : i));
-  } catch {
-    state.priceErrors.set(hash, "The local server is not responding");
+    const updated = await board.fetchPrices(hash);
+    state.items = state.items.map((i) => (i.marketHashName === hash ? updated : i));
+  } catch (error) {
+    state.priceErrors.set(hash, describePriceError(error));
   }
   state.pendingPrices = state.pendingPrices.filter((h) => h !== hash);
   updateRows([hash, ...state.pendingPrices]);
@@ -140,7 +146,7 @@ function renderSortHeaders(): void {
 
 function setInventory(inventory: Inventory): void {
   state.items = inventory.items;
-  state.steamId = inventory.steamId;
+  state.steamId = inventory.steamId ?? "";
   state.rows = new Map(inventory.items.map((item) => [item.marketHashName, createRow(item, priceStateOf(item.marketHashName), state.steamId)]));
   fillSelect(els.type, inventory.items.map((i) => i.type));
   fillSelect(els.rarity, inventory.items.map((i) => i.rarity));
@@ -160,12 +166,10 @@ async function refreshInventory(): Promise<void> {
   showSyncError(null);
   const hasCache = state.items.length > 0;
   try {
-    const res = await fetch("/api/refresh/inventory", { method: "POST" });
-    const body = await res.json();
-    if (res.ok) setInventory(body as Inventory);
-    else showSyncError(describeInventoryError(body.reason, body.error, hasCache));
-  } catch {
-    showSyncError(describeInventoryError("unavailable", "the local server is not responding", hasCache));
+    setInventory(await board.refreshInventory());
+  } catch (error) {
+    const reason = error instanceof InventoryError ? error.reason : "unavailable";
+    showSyncError(describeInventoryError(reason, (error as Error).message, hasCache));
   } finally {
     els.refresh.disabled = false;
     els.refresh.removeAttribute("aria-busy");
@@ -234,10 +238,12 @@ async function start(): Promise<void> {
   syncHorizontalScroll();
   setupPriceButtons();
   try {
-    const res = await fetch("/api/items");
-    setInventory((await res.json()) as Inventory);
-  } catch {
-    showSyncError("The local server is not responding. Restart it with npm start.");
+    board = createBoard({ db: await openAppDatabase(), fetchFn: steamFetch, queue: new MarketQueue(MARKET_QUEUE) });
+    const inventory = await board.load();
+    setInventory(inventory);
+    if (inventory.steamId && (await board.inventoryIsStale())) await refreshInventory();
+  } catch (error) {
+    showSyncError(`The local database could not be opened: ${(error as Error).message}`);
   }
 }
 

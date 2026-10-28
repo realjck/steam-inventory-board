@@ -170,3 +170,25 @@ test("setSteamId stores the SteamID and makes the inventory stale until refreshe
 
   assert.equal(await board.inventoryIsStale(), false);
 });
+
+test("inventory refreshes run one after another, so their saves never interleave", async () => {
+  let inFlight = 0;
+  let maxInFlight = 0;
+  const fetchFn: FetchFn = async (url) => {
+    inFlight++;
+    maxInFlight = Math.max(maxInFlight, inFlight);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    inFlight--;
+    return json(page(url.includes(STEAM_ID) ? "281750-Sól" : "281750-Hugin"));
+  };
+  const { board } = await setup({ fetchFn, urls: [], orderBookCalls: () => 0 });
+
+  const first = board.refreshInventory();
+  await board.setSteamId("76561197960265728");
+  const second = board.refreshInventory();
+  await Promise.all([first, second]);
+
+  assert.equal(maxInFlight, 1);
+  assert.deepEqual((await board.load()).items.map((i) => i.marketHashName), ["281750-Hugin"]);
+  assert.equal(await board.inventoryIsStale(), false);
+});

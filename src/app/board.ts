@@ -32,6 +32,8 @@ export type BoardDeps = {
 export function createBoard({ db, fetchFn, queue, now = () => new Date() }: BoardDeps): Board {
   // Concurrent requests for the same item share one Steam call.
   const pending = new Map<string, Promise<BoardItem>>();
+  // Inventory refreshes run one after another: two saves must never interleave their writes.
+  let refreshes: Promise<unknown> = Promise.resolve();
 
   async function load(): Promise<Inventory> {
     return { ...(await store.loadInventory(db)), steamId: await store.getSetting(db, "steam_id") };
@@ -50,15 +52,22 @@ export function createBoard({ db, fetchFn, queue, now = () => new Date() }: Boar
     return requireItem(marketHashName);
   }
 
+  /** Reads the SteamID when it starts, so a refresh queued after a SteamID change fetches the new account. */
+  async function refreshNow(): Promise<Inventory> {
+    const steamId = await store.getSetting(db, "steam_id");
+    if (!steamId) throw new Error("No SteamID set");
+    const items = groupItems(await fetchInventory(steamId, LANGUAGE, fetchFn));
+    await store.saveInventory(db, items, now().toISOString(), steamId);
+    return load();
+  }
+
   return {
     load,
 
-    async refreshInventory() {
-      const steamId = await store.getSetting(db, "steam_id");
-      if (!steamId) throw new Error("No SteamID set");
-      const items = groupItems(await fetchInventory(steamId, LANGUAGE, fetchFn));
-      await store.saveInventory(db, items, now().toISOString(), steamId);
-      return load();
+    refreshInventory() {
+      const run = refreshes.then(refreshNow);
+      refreshes = run.catch(() => undefined);
+      return run;
     },
 
     async fetchPrices(marketHashName) {

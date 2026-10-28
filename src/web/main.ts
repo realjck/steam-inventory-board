@@ -14,7 +14,7 @@ import { describeInventoryError } from "../core/messages.ts";
 import { InventoryError } from "../core/inventory.ts";
 import { MarketQueue } from "../core/queue.ts";
 import { createBoard, type Board, type Inventory } from "../app/board.ts";
-import { openAppDatabase, steamFetch } from "../app/tauri.ts";
+import { openAppDatabase, openInBrowser, steamFetch } from "../app/tauri.ts";
 
 /** Market pacing: one request at a time, 3 s apart, backing off 30 s, 60 s, 120 s on HTTP 429. */
 const MARKET_QUEUE = { intervalMs: 3000, backoffMs: 30_000, maxRetries: 3 };
@@ -218,6 +218,16 @@ function setupPriceButtons(): void {
   });
 }
 
+/** Steam links open in the default browser; left alone, the app window would navigate away. */
+function setupSteamLinks(): void {
+  els.rows.addEventListener("click", (event) => {
+    const link = (event.target as Element).closest<HTMLAnchorElement>('a[href^="https://steamcommunity.com/"]');
+    if (!link) return;
+    event.preventDefault();
+    openInBrowser(link.href);
+  });
+}
+
 /** Only the table body scrolls; the header follows it sideways, the totals stay put. */
 function syncHorizontalScroll(): void {
   const header = els.rows.parentElement!.querySelector("thead")!;
@@ -237,6 +247,7 @@ async function start(): Promise<void> {
   setupFilters();
   syncHorizontalScroll();
   setupPriceButtons();
+  setupSteamLinks();
   try {
     board = createBoard({ db: await openAppDatabase(), fetchFn: steamFetch, queue: new MarketQueue(MARKET_QUEUE) });
     const inventory = await board.load();

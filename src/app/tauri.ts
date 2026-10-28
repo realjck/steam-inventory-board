@@ -1,6 +1,7 @@
 /** The app's real dependencies: the SQLite file through the SQL plugin, Steam through the HTTP plugin. */
 import Database from "@tauri-apps/plugin-sql";
 import { fetch } from "@tauri-apps/plugin-http";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import type { SqlClient } from "../data/sql-client.ts";
 import type { FetchFn } from "./board.ts";
 
@@ -24,3 +25,8 @@ export async function openAppDatabase(): Promise<SqlClient> {
  * Origin tells the HTTP plugin to send none: the market order book answers 401 to the app's origin.
  */
 export const steamFetch: FetchFn = (url, init) => fetch(url, { ...init, headers: { ...init?.headers, Origin: "" } });
+
+/** Opens a page in the user's default browser (the opener plugin only allows steamcommunity.com). */
+export function openInBrowser(url: string): void {
+  void openUrl(url);
+}

@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildApp } from "./app.ts";
-import { openDatabase, saveInventory } from "./db.ts";
+import { openDatabase, saveInventory, cachedLanguage } from "./db.ts";
 import { InventoryError, type InventoryPage, type Item } from "./inventory.ts";
 
 const NOW = new Date("2026-10-28T14:32:00.000Z");
@@ -30,7 +30,7 @@ const page: InventoryPage = {
 
 function setup(fetchPages: () => Promise<InventoryPage[]> = async () => [page]) {
   const db = openDatabase(":memory:");
-  const app = buildApp({ db, fetchPages, fetchPrices: noPrices, steamId: STEAM_ID, now: () => NOW });
+  const app = buildApp({ db, fetchPages, fetchPrices: noPrices, steamId: STEAM_ID, language: "english", now: () => NOW });
   return { db, app };
 }
 
@@ -50,7 +50,7 @@ test("GET /api/items returns the cached inventory", async (t) => {
     marketable: false,
     iconUrl: "icon",
   };
-  saveInventory(db, [gems], "2026-10-27T09:00:00.000Z");
+  saveInventory(db, [gems], "2026-10-27T09:00:00.000Z", "english");
 
   const res = await app.inject({ method: "GET", url: "/api/items" });
 
@@ -78,7 +78,7 @@ test("POST /api/refresh/inventory answers 502 and keeps the cache when Steam fai
     throw new InventoryError(403);
   });
   t.after(() => app.close());
-  saveInventory(db, [], "2026-10-27T09:00:00.000Z");
+  saveInventory(db, [], "2026-10-27T09:00:00.000Z", "english");
 
   const res = await app.inject({ method: "POST", url: "/api/refresh/inventory" });
 
@@ -102,11 +102,20 @@ test("POST /api/refresh/inventory reports unexpected failures as unavailable", a
 test("GET / serves index.html from the web root", async (t) => {
   const webRoot = mkdtempSync(join(tmpdir(), "sib-web-"));
   writeFileSync(join(webRoot, "index.html"), "<!doctype html><title>Board</title>");
-  const app = buildApp({ db: openDatabase(":memory:"), fetchPages: async () => [], fetchPrices: noPrices, steamId: STEAM_ID, webRoot });
+  const app = buildApp({ db: openDatabase(":memory:"), fetchPages: async () => [], fetchPrices: noPrices, steamId: STEAM_ID, language: "english", webRoot });
   t.after(() => app.close());
 
   const res = await app.inject({ method: "GET", url: "/" });
 
   assert.equal(res.statusCode, 200);
   assert.match(res.body, /<title>Board<\/title>/);
+});
+
+test("POST /api/refresh/inventory records the language the inventory was fetched in", async (t) => {
+  const { db, app } = setup();
+  t.after(() => app.close());
+
+  await app.inject({ method: "POST", url: "/api/refresh/inventory" });
+
+  assert.equal(cachedLanguage(db), "english");
 });

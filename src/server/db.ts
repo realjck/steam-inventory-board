@@ -96,8 +96,8 @@ function fromRow(row: ItemRow): Item {
   };
 }
 
-/** Replaces the cached inventory with a fresh one, atomically. */
-export function saveInventory(db: Db, items: Item[], fetchedAt: string): void {
+/** Replaces the cached inventory with a fresh one, atomically, noting the Steam language it was fetched in. */
+export function saveInventory(db: Db, items: Item[], fetchedAt: string, language: string): void {
   const insert = db.prepare(`
     INSERT INTO items (market_hash_name, name, game, app_id, type, rarity, foil, quantity, tradable, marketable, icon_url)
     VALUES (@market_hash_name, @name, @game, @app_id, @type, @rarity, @foil, @quantity, @tradable, @marketable, @icon_url)
@@ -105,8 +105,16 @@ export function saveInventory(db: Db, items: Item[], fetchedAt: string): void {
   db.transaction(() => {
     db.prepare("DELETE FROM items").run();
     for (const item of items) insert.run(toRow(item));
-    db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('inventory_fetched_at', ?)").run(fetchedAt);
+    const setMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)");
+    setMeta.run("inventory_fetched_at", fetchedAt);
+    setMeta.run("inventory_language", language);
   })();
+}
+
+/** Language of the cached item names and tags; null for an empty cache or one saved before it was recorded. */
+export function cachedLanguage(db: Db): string | null {
+  const row = db.prepare("SELECT value FROM meta WHERE key = 'inventory_language'").get() as { value: string } | undefined;
+  return row?.value ?? null;
 }
 
 export function savePrices(db: Db, marketHashName: string, prices: OrderBookPrices, fetchedAt: string): void {
@@ -139,4 +147,9 @@ export function loadInventory(db: Db): { items: BoardItem[]; fetchedAt: string |
     | { value: string }
     | undefined;
   return { items: rows.map(toBoardItem), fetchedAt: meta?.value ?? null };
+}
+
+/** True when the inventory must be fetched again: never fetched, or fetched in another language. */
+export function inventoryIsStale(db: Db, language: string): boolean {
+  return loadInventory(db).fetchedAt === null || cachedLanguage(db) !== language;
 }

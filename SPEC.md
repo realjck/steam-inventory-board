@@ -115,7 +115,7 @@ Les prix en cache s'affichent dès le démarrage. Si un prix est vieux, c'est la
 - **Base locale SQLite** (ex. `better-sqlite3`), fichier unique dans `data/`. Elle stocke :
   - l'inventaire ;
   - les prix (vente et achat), sans TTL, avec leur horodatage `fetched_at`.
-- **Démarrage instantané.** Le tableau s'affiche immédiatement depuis SQLite. L'inventaire n'est récupéré automatiquement que si la base est vide (premier lancement) ; ensuite, seulement via le bouton.
+- **Démarrage instantané.** Le tableau s'affiche immédiatement depuis SQLite. L'inventaire n'est récupéré automatiquement que si la base est vide (premier lancement) ou si `LANGUAGE` a changé depuis sa récupération (la langue est enregistrée avec le cache) ; sinon, seulement via le bouton.
 - **Objets non vendables.** Pas de bouton ni de requête de prix ; afficher « — ».
 - **Aucun ordre en cours.** Si `amtMinSellOrder` ou `amtMaxBuyOrder` est absent, afficher « — » pour ce prix.
 - **CORS.** Tous les appels Steam passent par le backend local, jamais par le navigateur.

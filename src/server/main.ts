@@ -2,7 +2,7 @@
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { buildApp } from "./app.ts";
-import { openDatabase, loadInventory } from "./db.ts";
+import { openDatabase, inventoryIsStale } from "./db.ts";
 import { fetchInventory } from "./inventory.ts";
 import { fetchOrderBook } from "./market.ts";
 import { MarketQueue } from "./queue.ts";
@@ -41,11 +41,12 @@ const app = buildApp({
   fetchPages: () => fetchInventory(steamId, language),
   fetchPrices: (marketHashName) => queue.run(() => fetchOrderBook(marketHashName, currency)),
   steamId,
+  language,
   webRoot: resolve("dist/web"),
 });
 
-if (loadInventory(db).fetchedAt === null) {
-  console.log("Empty cache: fetching inventory from Steam...");
+if (inventoryIsStale(db, language)) {
+  console.log(`No inventory cached in ${language}: fetching it from Steam...`);
   const res = await app.inject({ method: "POST", url: "/api/refresh/inventory" });
   console.log(res.statusCode === 200 ? "Inventory cached." : `Inventory fetch failed: ${res.body}`);
 }

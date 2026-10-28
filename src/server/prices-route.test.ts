@@ -30,8 +30,9 @@ function setup(fetchPrices: (marketHashName: string) => Promise<OrderBookPrices>
     db,
     [item({}), item({ marketHashName: "753-Gems", marketable: false }), item({ marketHashName: "1-A/B" })],
     "2026-10-28T10:00:00.000Z",
+    "english",
   );
-  const app = buildApp({ db, fetchPages: async () => [], fetchPrices, steamId: "76561198000000000", now: () => NOW });
+  const app = buildApp({ db, fetchPages: async () => [], fetchPrices, steamId: "76561198000000000", language: "english", now: () => NOW });
   return { app };
 }
 

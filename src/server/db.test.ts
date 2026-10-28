@@ -4,7 +4,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
-import { openDatabase, saveInventory, loadInventory, savePrices } from "./db.ts";
+import { openDatabase, saveInventory, loadInventory, savePrices, cachedLanguage, inventoryIsStale } from "./db.ts";
 import type { Item } from "./inventory.ts";
 
 function item(overrides: Partial<Item>): Item {
@@ -34,7 +34,7 @@ test("saveInventory round-trips items and their fetch date", () => {
   const db = openDatabase(":memory:");
   const items = [item({}), item({ marketHashName: "753-Gems", game: null, appId: null, rarity: null, foil: true, tradable: false })];
 
-  saveInventory(db, items, "2026-10-28T14:32:00.000Z");
+  saveInventory(db, items, "2026-10-28T14:32:00.000Z", "english");
 
   assert.deepEqual(loadInventory(db), {
     items: items.map((i) => ({ ...i, prices: null })),
@@ -44,9 +44,9 @@ test("saveInventory round-trips items and their fetch date", () => {
 
 test("saveInventory replaces the previous inventory", () => {
   const db = openDatabase(":memory:");
-  saveInventory(db, [item({ marketHashName: "sold-item" })], "2026-10-27T10:00:00.000Z");
+  saveInventory(db, [item({ marketHashName: "sold-item" })], "2026-10-27T10:00:00.000Z", "english");
 
-  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z");
+  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z", "english");
 
   assert.deepEqual(
     loadInventory(db).items.map((i) => i.marketHashName),
@@ -56,7 +56,7 @@ test("saveInventory replaces the previous inventory", () => {
 
 test("savePrices attaches prices and their fetch date to the item", () => {
   const db = openDatabase(":memory:");
-  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z");
+  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z", "english");
 
   savePrices(db, "281750-Sól", { sell: 13, buy: null }, "2026-10-28T14:32:00.000Z");
 
@@ -65,7 +65,7 @@ test("savePrices attaches prices and their fetch date to the item", () => {
 
 test("savePrices replaces the previous prices of the item", () => {
   const db = openDatabase(":memory:");
-  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z");
+  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z", "english");
   savePrices(db, "281750-Sól", { sell: 13, buy: 12 }, "2026-10-28T14:32:00.000Z");
 
   savePrices(db, "281750-Sól", { sell: 15, buy: 14 }, "2026-10-29T09:00:00.000Z");
@@ -75,10 +75,10 @@ test("savePrices replaces the previous prices of the item", () => {
 
 test("prices survive an inventory refresh", () => {
   const db = openDatabase(":memory:");
-  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z");
+  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z", "english");
   savePrices(db, "281750-Sól", { sell: 13, buy: 12 }, "2026-10-28T14:32:00.000Z");
 
-  saveInventory(db, [item({ quantity: 3 })], "2026-10-29T10:00:00.000Z");
+  saveInventory(db, [item({ quantity: 3 })], "2026-10-29T10:00:00.000Z", "english");
 
   assert.equal(loadInventory(db).items[0].prices?.sell, 13);
 });
@@ -102,4 +102,32 @@ test("openDatabase migrates a cache created before appId and asks for a fresh in
   assert.equal(inventory.fetchedAt, null);
   assert.equal(inventory.items[0].appId, null);
   db.close();
+});
+
+test("cachedLanguage is null until an inventory is saved, then the language it was fetched in", () => {
+  const db = openDatabase(":memory:");
+  assert.equal(cachedLanguage(db), null);
+
+  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z", "english");
+
+  assert.equal(cachedLanguage(db), "english");
+});
+
+test("inventoryIsStale when the cache is empty or was fetched in another language", () => {
+  const db = openDatabase(":memory:");
+  assert.equal(inventoryIsStale(db, "english"), true);
+
+  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z", "french");
+  assert.equal(inventoryIsStale(db, "english"), true);
+
+  saveInventory(db, [item({})], "2026-10-28T11:00:00.000Z", "english");
+  assert.equal(inventoryIsStale(db, "english"), false);
+});
+
+test("inventoryIsStale for a cache saved before its language was recorded", () => {
+  const db = openDatabase(":memory:");
+  saveInventory(db, [item({})], "2026-10-28T10:00:00.000Z", "english");
+  db.prepare("DELETE FROM meta WHERE key = 'inventory_language'").run();
+
+  assert.equal(inventoryIsStale(db, "english"), true);
 });

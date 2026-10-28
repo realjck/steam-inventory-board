@@ -12,12 +12,14 @@ export type AppDeps = {
   fetchPrices: (marketHashName: string) => Promise<OrderBookPrices>;
   /** Sent to the page so it can link each item to the owner's badge page. */
   steamId: string;
+  /** Steam language of item names and tags, recorded with the cache. */
+  language: string;
   now?: () => Date;
   /** Absolute path of the built front end; omitted, only the API is served. */
   webRoot?: string;
 };
 
-export function buildApp({ db, fetchPages, fetchPrices, steamId, now = () => new Date(), webRoot }: AppDeps): FastifyInstance {
+export function buildApp({ db, fetchPages, fetchPrices, steamId, language, now = () => new Date(), webRoot }: AppDeps): FastifyInstance {
   const app = Fastify();
   if (webRoot) app.register(fastifyStatic, { root: webRoot });
 
@@ -44,7 +46,7 @@ export function buildApp({ db, fetchPages, fetchPrices, steamId, now = () => new
   app.post("/api/refresh/inventory", async (_request, reply) => {
     try {
       const items = groupItems(await fetchPages());
-      saveInventory(db, items, now().toISOString());
+      saveInventory(db, items, now().toISOString(), language);
       return inventory();
     } catch (error) {
       const reason = error instanceof InventoryError ? error.reason : "unavailable";

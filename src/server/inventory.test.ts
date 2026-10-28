@@ -34,6 +34,7 @@ test("groupItems maps a single asset to an item with its tags", () => {
       marketHashName: "281750-Sól",
       name: "Sól",
       game: "Munin",
+      appId: 281750,
       type: "Carte à échanger",
       rarity: "commun",
       foil: false,
@@ -73,6 +74,7 @@ test("groupItems leaves missing tags as null", () => {
   const [item] = groupItems([{ assets: [asset("10", "1", "0")], descriptions: [untagged] }]);
 
   assert.equal(item.game, null);
+  assert.equal(item.appId, null);
   assert.equal(item.type, null);
   assert.equal(item.rarity, null);
   assert.equal(item.foil, false);

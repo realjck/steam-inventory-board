@@ -1,7 +1,9 @@
 /** Builds one table row per item; Steam strings are only ever set as text. */
-import type { Item } from "../server/inventory.ts";
-import { CHECK_ICON } from "./icons.ts";
-import { formatCount, marketUrl } from "./format.ts";
+import type { BoardItem as Item } from "../server/db.ts";
+import { CHECK_ICON, COLLECTION_ICON } from "./icons.ts";
+import { collectionUrl, formatCount, marketUrl } from "./format.ts";
+import { priceCells } from "./price-cells.ts";
+import type { PriceState } from "./prices.ts";
 
 const ICON_SIZE = "/64fx64f";
 
@@ -15,6 +17,21 @@ function textCell(text: string | null, className?: string): HTMLTableCellElement
   const td = cell(className);
   td.textContent = text ?? "—";
   if (text === null) td.classList.add("missing");
+  return td;
+}
+
+function collectionCell(item: Item, steamId: string): HTMLTableCellElement {
+  const td = cell("col-collection");
+  const url = collectionUrl(steamId, item.appId);
+  if (!url) return td;
+  const link = document.createElement("a");
+  link.href = url;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.title = `Voir ma collection ${item.game ?? ""}`.trim();
+  link.ariaLabel = link.title;
+  link.innerHTML = COLLECTION_ICON;
+  td.append(link);
   return td;
 }
 
@@ -82,9 +99,11 @@ function numberCell(value: number): HTMLTableCellElement {
   return textCell(formatCount(value), "num");
 }
 
-export function createRow(item: Item): HTMLTableRowElement {
+export function createRow(item: Item, priceState: PriceState, steamId: string): HTMLTableRowElement {
   const tr = document.createElement("tr");
+  tr.dataset.hash = item.marketHashName;
   tr.append(
+    collectionCell(item, steamId),
     iconCell(item),
     nameCell(item),
     textCell(item.game, "col-game"),
@@ -92,6 +111,7 @@ export function createRow(item: Item): HTMLTableRowElement {
     rarityCell(item.rarity),
     foilCell(item.foil),
     numberCell(item.quantity),
+    ...priceCells(item, priceState),
     flagCell(item.tradable),
     flagCell(item.marketable),
   );

@@ -8,6 +8,8 @@ import { openDatabase, saveInventory } from "./db.ts";
 import type { InventoryPage, Item } from "./inventory.ts";
 
 const NOW = new Date("2026-10-28T14:32:00.000Z");
+const noPrices = async () => ({ sell: null, buy: null });
+const STEAM_ID = "76561198000000000";
 
 const page: InventoryPage = {
   assets: [{ assetid: "10", classid: "1", instanceid: "0", amount: "2" }],
@@ -28,7 +30,7 @@ const page: InventoryPage = {
 
 function setup(fetchPages: () => Promise<InventoryPage[]> = async () => [page]) {
   const db = openDatabase(":memory:");
-  const app = buildApp({ db, fetchPages, now: () => NOW });
+  const app = buildApp({ db, fetchPages, fetchPrices: noPrices, steamId: STEAM_ID, now: () => NOW });
   return { db, app };
 }
 
@@ -39,6 +41,7 @@ test("GET /api/items returns the cached inventory", async (t) => {
     marketHashName: "753-Gems",
     name: "Gemmes",
     game: "Steam",
+    appId: 753,
     type: "Gemmes",
     rarity: "commun",
     foil: false,
@@ -53,6 +56,7 @@ test("GET /api/items returns the cached inventory", async (t) => {
 
   assert.equal(res.statusCode, 200);
   assert.equal(res.json().fetchedAt, "2026-10-27T09:00:00.000Z");
+  assert.equal(res.json().steamId, STEAM_ID);
   assert.deepEqual(res.json().items.map((i: Item) => i.marketHashName), ["753-Gems"]);
 });
 
@@ -87,7 +91,7 @@ test("POST /api/refresh/inventory answers 502 and keeps the cache when Steam fai
 test("GET / serves index.html from the web root", async (t) => {
   const webRoot = mkdtempSync(join(tmpdir(), "sib-web-"));
   writeFileSync(join(webRoot, "index.html"), "<!doctype html><title>Board</title>");
-  const app = buildApp({ db: openDatabase(":memory:"), fetchPages: async () => [], webRoot });
+  const app = buildApp({ db: openDatabase(":memory:"), fetchPages: async () => [], fetchPrices: noPrices, steamId: STEAM_ID, webRoot });
   t.after(() => app.close());
 
   const res = await app.inject({ method: "GET", url: "/" });

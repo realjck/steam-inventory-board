@@ -14,6 +14,8 @@ npm start              # builds the page, then serves http://localhost:3000
 
 The first start fetches the inventory from Steam and caches it in `data/`. Later starts read the cache; use the refresh button to fetch it again.
 
+Prices are never fetched automatically: each row has a button that fetches its lowest sell and highest buy price. Market requests go through a queue (one every `MARKET_INTERVAL_MS`, 3000 by default) that backs off on HTTP 429. `PORT` (default 3000) is optional too.
+
 ## Scripts
 
 - `npm test`: unit tests (`node:test`)

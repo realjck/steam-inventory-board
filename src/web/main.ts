@@ -1,20 +1,25 @@
-/** Page wiring: loads the cached inventory and keeps the table in sync with filters and sort. */
+/** Page wiring: loads the cached inventory, keeps the table in sync with filters and sort, fetches prices on click. */
 import "@fontsource/barlow/400.css";
 import "@fontsource/barlow/500.css";
 import "@fontsource/barlow-semi-condensed/500.css";
 import "@fontsource/barlow-semi-condensed/600.css";
 import "./style.css";
-import type { Item } from "../server/inventory.ts";
+import type { BoardItem as Item } from "../server/db.ts";
 import { computeTotals, filterItems, sortItems, NO_FILTERS, type Filters, type SortDirection, type SortKey } from "./table.ts";
 import { createRow } from "./rows.ts";
-import { formatCount, formatFetchedAt } from "./format.ts";
+import { formatFetchedAt, formatTotals } from "./format.ts";
 import { REFRESH_ICON } from "./icons.ts";
+import { describePriceError, priceStatuses, IDLE, type PriceState } from "./prices.ts";
 
-type Inventory = { items: Item[]; fetchedAt: string | null };
+type Inventory = { items: Item[]; fetchedAt: string | null; steamId: string };
 
 const state = {
   items: [] as Item[],
+  steamId: "",
   rows: new Map<string, HTMLTableRowElement>(),
+  /** Price requests sent and not answered yet, oldest first. */
+  pendingPrices: [] as string[],
+  priceErrors: new Map<string, string>(),
   filters: { ...NO_FILTERS } as Filters,
   sort: { key: "game" as SortKey, direction: "asc" as SortDirection },
 };
@@ -35,8 +40,7 @@ const els = {
   fetchedAt: $<HTMLParagraphElement>("fetched-at"),
   refresh: $<HTMLButtonElement>("refresh-inventory"),
   syncError: $<HTMLParagraphElement>("sync-error"),
-  totalRows: $<HTMLTableCellElement>("total-rows"),
-  totalQuantity: $<HTMLTableCellElement>("total-quantity"),
+  totals: $<HTMLTableCellElement>("totals"),
 };
 
 
@@ -74,11 +78,42 @@ function render(): void {
   renderEmpty(visible);
 
   const totals = computeTotals(visible);
-  els.totalRows.textContent =
-    visible.length === state.items.length
-      ? `${formatCount(totals.rows)} objets`
-      : `${formatCount(totals.rows)} objets affichés sur ${formatCount(state.items.length)}`;
-  els.totalQuantity.textContent = formatCount(totals.quantity);
+  els.totals.textContent = formatTotals(totals.rows, totals.quantity, state.items.length);
+}
+
+function priceStateOf(hash: string): PriceState {
+  const pending = priceStatuses(state.pendingPrices).get(hash);
+  if (pending) return { status: pending };
+  const error = state.priceErrors.get(hash);
+  return error ? { status: "error", message: error } : IDLE;
+}
+
+function updateRows(hashes: string[]): void {
+  for (const hash of hashes) {
+    const item = state.items.find((i) => i.marketHashName === hash);
+    if (!item) continue;
+    const row = createRow(item, priceStateOf(hash), state.steamId);
+    state.rows.get(hash)?.replaceWith(row);
+    state.rows.set(hash, row);
+  }
+}
+
+async function requestPrices(hash: string): Promise<void> {
+  if (state.pendingPrices.includes(hash)) return;
+  state.pendingPrices.push(hash);
+  state.priceErrors.delete(hash);
+  updateRows([hash]);
+  try {
+    const res = await fetch(`/api/items/${encodeURIComponent(hash)}/prices`, { method: "POST" });
+    const body = await res.json();
+    if (!res.ok) state.priceErrors.set(hash, describePriceError(res.status, body.error));
+    else state.items = state.items.map((i) => (i.marketHashName === hash ? (body as Item) : i));
+  } catch {
+    state.priceErrors.set(hash, "Le serveur local ne répond pas");
+  }
+  state.pendingPrices = state.pendingPrices.filter((h) => h !== hash);
+  updateRows([hash, ...state.pendingPrices]);
+  render();
 }
 
 function renderSortHeaders(): void {
@@ -90,7 +125,8 @@ function renderSortHeaders(): void {
 
 function setInventory(inventory: Inventory): void {
   state.items = inventory.items;
-  state.rows = new Map(inventory.items.map((item) => [item.marketHashName, createRow(item)]));
+  state.steamId = inventory.steamId;
+  state.rows = new Map(inventory.items.map((item) => [item.marketHashName, createRow(item, priceStateOf(item.marketHashName), state.steamId)]));
   fillSelect(els.type, inventory.items.map((i) => i.type));
   fillSelect(els.rarity, inventory.items.map((i) => i.rarity));
   els.fetchedAt.textContent = inventory.fetchedAt ? `Inventaire du ${formatFetchedAt(inventory.fetchedAt)}` : "";
@@ -154,15 +190,21 @@ function setupFilters(): void {
   });
 }
 
-/** Only the table body scrolls; the header and the totals follow it sideways. */
+function setupPriceButtons(): void {
+  els.rows.addEventListener("click", (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>("button[data-action=prices]");
+    const hash = button?.closest("tr")?.dataset.hash;
+    if (hash) requestPrices(hash);
+  });
+}
+
+/** Only the table body scrolls; the header follows it sideways, the totals stay put. */
 function syncHorizontalScroll(): void {
   const header = els.rows.parentElement!.querySelector("thead")!;
-  const footer = els.rows.parentElement!.querySelector("tfoot")!;
   els.rows.addEventListener(
     "scroll",
     () => {
       header.scrollLeft = els.rows.scrollLeft;
-      footer.scrollLeft = els.rows.scrollLeft;
     },
     { passive: true },
   );
@@ -174,6 +216,7 @@ async function start(): Promise<void> {
   setupSortHeaders();
   setupFilters();
   syncHorizontalScroll();
+  setupPriceButtons();
   try {
     const res = await fetch("/api/items");
     setInventory((await res.json()) as Inventory);

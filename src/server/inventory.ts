@@ -29,6 +29,8 @@ export type Item = {
   marketHashName: string;
   name: string;
   game: string | null;
+  /** Steam appid of the game, from the Game tag ("app_915230"). */
+  appId: number | null;
   type: string | null;
   rarity: string | null;
   foil: boolean;
@@ -42,11 +44,18 @@ function tagLabel(description: Description, category: string): string | null {
   return description.tags?.find((t) => t.category === category)?.localized_tag_name ?? null;
 }
 
+function gameAppId(description: Description): number | null {
+  const internalName = description.tags?.find((t) => t.category === "Game")?.internal_name;
+  const match = internalName?.match(/^app_(\d+)$/);
+  return match ? Number(match[1]) : null;
+}
+
 function toItem(description: Description): Item {
   return {
     marketHashName: description.market_hash_name,
     name: description.name,
     game: tagLabel(description, "Game"),
+    appId: gameAppId(description),
     type: tagLabel(description, "item_class"),
     rarity: tagLabel(description, "droprate"),
     foil: description.tags?.some((t) => t.internal_name === "cardborder_1") ?? false,

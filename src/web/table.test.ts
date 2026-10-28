@@ -1,13 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { filterItems, sortItems, computeTotals, NO_FILTERS, type Filters } from "./table.ts";
-import type { Item } from "../server/inventory.ts";
+import type { BoardItem as Item, Prices } from "../server/db.ts";
 
 function item(overrides: Partial<Item>): Item {
   return {
     marketHashName: overrides.name ?? "item",
     name: "item",
     game: "Munin",
+    appId: 281750,
     type: "Carte à échanger",
     rarity: "commun",
     foil: false,
@@ -15,6 +16,7 @@ function item(overrides: Partial<Item>): Item {
     tradable: true,
     marketable: true,
     iconUrl: "icon",
+    prices: null,
     ...overrides,
   };
 }
@@ -87,8 +89,22 @@ test("sortItems does not mutate its input", () => {
   assert.deepEqual(names(items), ["b", "a"]);
 });
 
-test("computeTotals counts rows and owned quantity", () => {
-  const items = [item({ quantity: 1 }), item({ quantity: 3 }), item({ quantity: 297 })];
+const priced = (sell: number | null, buy: number | null = null): Prices => ({ sell, buy, fetchedAt: "2026-10-28T14:32:00.000Z" });
+
+test("sortItems orders by sell or buy price, unpriced items last", () => {
+  const items = [
+    item({ name: "unpriced" }),
+    item({ name: "cheap", quantity: 10, prices: priced(5, 9) }),
+    item({ name: "dear", quantity: 1, prices: priced(40, 1) }),
+    item({ name: "no sell order", prices: priced(null, 3) }),
+  ];
+
+  assert.deepEqual(names(sortItems(items, "sell", "desc")), ["dear", "cheap", "unpriced", "no sell order"]);
+  assert.deepEqual(names(sortItems(items, "buy", "asc")), ["dear", "no sell order", "cheap", "unpriced"]);
+});
+
+test("computeTotals counts unique items and owned quantity", () => {
+  const items = [item({ quantity: 1 }), item({ quantity: 3, prices: priced(10, 9) }), item({ quantity: 297, marketable: false })];
 
   assert.deepEqual(computeTotals(items), { rows: 3, quantity: 301 });
 });

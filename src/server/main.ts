@@ -4,8 +4,11 @@ import { resolve } from "node:path";
 import { buildApp } from "./app.ts";
 import { openDatabase, loadInventory } from "./db.ts";
 import { fetchInventory } from "./inventory.ts";
+import { fetchOrderBook } from "./market.ts";
+import { MarketQueue } from "./queue.ts";
 
-const PORT = 3000;
+const BACKOFF_MS = 30_000;
+const MAX_RETRIES = 3;
 
 function readSteamId(): string {
   const steamId = process.env.STEAM_ID64 ?? "";
@@ -13,14 +16,31 @@ function readSteamId(): string {
   return steamId;
 }
 
+function readInteger(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw === "") return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 0) throw new Error(`${name} must be a non-negative integer`);
+  return value;
+}
+
 const steamId = readSteamId();
 const language = process.env.LANGUAGE ?? "french";
+const port = readInteger("PORT", 3000);
+const currency = readInteger("CURRENCY", 3);
+const queue = new MarketQueue({
+  intervalMs: readInteger("MARKET_INTERVAL_MS", 3000),
+  backoffMs: BACKOFF_MS,
+  maxRetries: MAX_RETRIES,
+});
 
 mkdirSync("data", { recursive: true });
 const db = openDatabase("data/inventory.db");
 const app = buildApp({
   db,
   fetchPages: () => fetchInventory(steamId, language),
+  fetchPrices: (marketHashName) => queue.run(() => fetchOrderBook(marketHashName, currency)),
+  steamId,
   webRoot: resolve("dist/web"),
 });
 
@@ -30,5 +50,5 @@ if (loadInventory(db).fetchedAt === null) {
   console.log(res.statusCode === 200 ? "Inventory cached." : `Inventory fetch failed: ${res.body}`);
 }
 
-await app.listen({ port: PORT, host: "127.0.0.1" });
-console.log(`Steam Inventory Board on http://localhost:${PORT}`);
+await app.listen({ port, host: "127.0.0.1" });
+console.log(`Steam Inventory Board on http://localhost:${port}`);

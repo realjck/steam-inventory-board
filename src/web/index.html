@@ -40,6 +40,7 @@
       <table>
         <thead>
           <tr>
+            <th scope="col" class="col-collection"><span class="visually-hidden">Collection</span></th>
             <th scope="col" class="col-icon"><span class="visually-hidden">Image</span></th>
             <th scope="col" data-sort="name" class="col-name">Nom</th>
             <th scope="col" data-sort="game" class="col-game">Jeu</th>
@@ -47,6 +48,9 @@
             <th scope="col" data-sort="rarity">Rareté</th>
             <th scope="col" data-sort="foil">Brillante</th>
             <th scope="col" data-sort="quantity" class="num">Quantité</th>
+            <th scope="col" data-sort="sell" class="num" title="Prix de vente le plus bas">Vente</th>
+            <th scope="col" data-sort="buy" class="num" title="Meilleur prix d'achat (ordre d'achat)">Achat</th>
+            <th scope="col" class="col-prices">Prix relevés</th>
             <th scope="col" data-sort="tradable" class="flag">Échangeable</th>
             <th scope="col" data-sort="marketable" class="flag">Vendable</th>
           </tr>
@@ -54,9 +58,7 @@
         <tbody id="rows"></tbody>
         <tfoot>
           <tr>
-            <td colspan="6" id="total-rows"></td>
-            <td class="num" id="total-quantity"></td>
-            <td colspan="2"></td>
+            <td id="totals"></td>
           </tr>
         </tfoot>
       </table>

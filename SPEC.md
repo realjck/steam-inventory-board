@@ -27,9 +27,9 @@ Usage personnel, lecture seule. Aucune action sur le compte : pas de vente, pas 
   - vendable
   - prix de vente le plus bas
   - meilleur prix d'achat (buy order)
-  - valeur totale (quantité × prix de vente)
 
   Pas de prix médian ni de volume : pour le détail, on passe par le lien vers le marché.
+- **Lien collection.** Première colonne : une icône SVG (2 × 2 carreaux) qui ouvre, dans un nouvel onglet, la page de badge du jeu de l'objet pour mon compte : `https://steamcommunity.com/profiles/{STEAM_ID64}/gamecards/{appid}` (Steam redirige vers l'URL personnalisée). L'appid vient du tag `Game` (`app_{appid}`). Pas d'icône pour les objets rattachés à Steam lui-même (appid 753, ex. gemmes).
 - **Lien marché.** Le nom de l'objet est un lien cliquable (nouvel onglet) vers sa page du marché Steam : `https://steamcommunity.com/market/listings/753/{market_hash_name encodé}`. Objet non vendable : pas de lien.
 - **Filtres.**
   - Recherche texte, portant sur le nom de l'objet **et** le nom du jeu (pas de filtre dédié au jeu).
@@ -38,7 +38,7 @@ Usage personnel, lecture seule. Aucune action sur le compte : pas de vente, pas 
   - Brillante.
   - Échangeable ou vendable.
   - « Doublons uniquement » (quantité ≥ 2).
-- **Tri et totaux.** Tri sur toutes les colonnes ; sur une colonne de prix, les objets sans prix sont toujours en fin de liste. Totaux en pied de tableau : nombre d'objets, quantité totale, valeur totale. La valeur totale ne porte que sur les objets chiffrés et l'indique (ex. « 12,40 € (35 / 2 249 objets chiffrés) »).
+- **Tri et totaux.** Tri sur toutes les colonnes ; sur une colonne de prix, les objets sans prix sont toujours en fin de liste. Pied de tableau : une seule mention, fixe au défilement horizontal, « 2 608 objets uniques (Total 2 994) » (avec « sur N » quand des filtres masquent des objets). Pas de valeur totale.
 - **Prix à la demande.** Voir section 2.
 - **Rafraîchissement de l'inventaire.** Un bouton (même icône SVG que le rafraîchissement des prix, sans texte), avec l'horodatage de la dernière mise à jour. Il n'y a pas de rafraîchissement global des prix.
 
@@ -56,6 +56,8 @@ Usage personnel, lecture seule. Aucune action sur le compte : pas de vente, pas 
 STEAM_ID64=7656119XXXXXXXXXX
 CURRENCY=3          # 3 = EUR
 LANGUAGE=french
+MARKET_INTERVAL_MS=3000  # délai minimal entre deux requêtes marché (optionnel)
+PORT=3000                # optionnel
 ```
 
 L'inventaire doit être **public**.
@@ -96,7 +98,7 @@ L'inventaire doit être **public**.
 
 **Chargement à la demande uniquement.** Aucun appel au marché n'est fait au démarrage ni en arrière-plan. La cellule de prix d'une ligne a trois états :
 
-- **Jamais chargé.** Un bouton récupère les deux prix pour cet objet uniquement : icône SVG (flèche de téléchargement), sans texte, avec `title` et `aria-label` « Obtenir les prix ».
+- **Jamais chargé.** Un bouton récupère les deux prix pour cet objet uniquement : icône SVG (flèche de téléchargement) suivie du texte « Obtenir les prix ».
 - **En cache.** La cellule affiche les prix, la date de dernière mise à jour (ex. « 0,13 € · 28/10 14:32 ») et un bouton de rafraîchissement : icône SVG (flèche circulaire), sans texte, avec `title` et `aria-label` « Rafraîchir ».
 - **En cours ou en erreur.** Un indicateur de chargement (ou « en attente » si d'autres demandes passent avant), ou un message d'erreur avec possibilité de réessayer.
 
@@ -122,7 +124,7 @@ Les prix en cache s'affichent dès le démarrage. Si un prix est vieux, c'est la
   - le fetch Steam ;
   - la file d'attente ;
   - le cache ;
-  - une API REST locale : `GET /api/items`, `POST /api/refresh/inventory`, `POST /api/items/:id/prices` (récupère ou rafraîchit les prix d'un objet), `GET /api/status`.
+  - une API REST locale : `GET /api/items`, `POST /api/refresh/inventory`, `POST /api/items/:id/prices` (récupère ou rafraîchit les prix d'un objet ; la réponse arrive quand la file d'attente l'a traité). Pas de `/api/status` : la page connaît ses propres demandes en cours, et la file sert dans l'ordre d'arrivée.
 - **Frontend.** Vite + TypeScript avec une lib de tableau (TanStack Table ou équivalent), servi par le backend.
 - **Lancement.** Une seule commande (`npm start`), puis ouvrir `http://localhost:3000`.
 - **Option.** Packaging Tauri plus tard ; ne pas en dépendre en v1.

@@ -1,5 +1,5 @@
 /** Pure table logic: filtering, sorting and footer totals. */
-import type { Item } from "../server/inventory.ts";
+import type { BoardItem as Item } from "../server/db.ts";
 
 export type Filters = {
   search: string;
@@ -21,7 +21,7 @@ export const NO_FILTERS: Filters = {
   duplicatesOnly: false,
 };
 
-export type SortKey = "name" | "game" | "type" | "rarity" | "foil" | "quantity" | "tradable" | "marketable";
+export type SortKey = "name" | "game" | "type" | "rarity" | "foil" | "quantity" | "sell" | "buy" | "tradable" | "marketable";
 export type SortDirection = "asc" | "desc";
 
 type SortValue = string | number | boolean | null;
@@ -33,6 +33,8 @@ const SORT_VALUES: Record<SortKey, (item: Item) => SortValue> = {
   rarity: (i) => i.rarity,
   foil: (i) => i.foil,
   quantity: (i) => i.quantity,
+  sell: (i) => i.prices?.sell ?? null,
+  buy: (i) => i.prices?.buy ?? null,
   tradable: (i) => i.tradable,
   marketable: (i) => i.marketable,
 };

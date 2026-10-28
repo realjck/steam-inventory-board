@@ -3,11 +3,11 @@ import type { InventoryFailure } from "../server/inventory.ts";
 
 const BY_REASON: Record<Exclude<InventoryFailure, "unavailable">, string> = {
   private:
-    "Steam refuse l'accès à l'inventaire : il est privé ou introuvable. Rendez-le public dans les paramètres de confidentialité du profil Steam.",
-  "rate-limited": "Steam limite les requêtes d'inventaire. Réessayez dans quelques minutes.",
+    "Steam denies access to the inventory: it is private or cannot be found. Make it public in your Steam profile's privacy settings.",
+  "rate-limited": "Steam is rate limiting inventory requests. Try again in a few minutes.",
 };
 
 export function describeInventoryError(reason: InventoryFailure, message: string, hasCache: boolean): string {
-  const text = reason === "unavailable" ? `Le rafraîchissement a échoué : ${message}.` : BY_REASON[reason];
-  return hasCache ? `${text} L'inventaire affiché est celui du cache.` : text;
+  const text = reason === "unavailable" ? `Refresh failed: ${message}.` : BY_REASON[reason];
+  return hasCache ? `${text} The table shows the cached inventory.` : text;
 }

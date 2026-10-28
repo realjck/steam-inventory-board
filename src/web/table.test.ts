@@ -60,7 +60,7 @@ test("flag filters keep foil, tradable, marketable or duplicated items", () => {
   assert.deepEqual(filter(items, { duplicatesOnly: true }), ["dup"]);
 });
 
-test("sortItems orders text with French collation in both directions", () => {
+test("sortItems orders text ignoring accents and case, in both directions", () => {
   const items = [item({ name: "Émeraude" }), item({ name: "zèbre" }), item({ name: "Ambre" })];
 
   assert.deepEqual(names(sortItems(items, "name", "asc")), ["Ambre", "Émeraude", "zèbre"]);

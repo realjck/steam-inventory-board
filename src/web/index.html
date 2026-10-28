@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,32 +8,32 @@
   </head>
   <body>
     <header class="topbar">
-      <h1>Mon inventaire Steam</h1>
+      <h1>My Steam inventory</h1>
       <div class="sync">
         <p id="fetched-at" class="sync-date"></p>
-        <button id="refresh-inventory" class="icon-button" type="button" title="Rafraîchir l'inventaire" aria-label="Rafraîchir l'inventaire"></button>
+        <button id="refresh-inventory" class="icon-button" type="button" title="Refresh inventory" aria-label="Refresh inventory"></button>
       </div>
       <p id="sync-error" class="sync-error" role="alert" hidden></p>
     </header>
 
     <form id="filters" class="filters" role="search">
       <label class="search">
-        <span class="visually-hidden">Rechercher un objet ou un jeu</span>
-        <input id="search" type="search" placeholder="Objet ou jeu…" autocomplete="off" />
+        <span class="visually-hidden">Search an item or a game</span>
+        <input id="search" type="search" placeholder="Item or game…" autocomplete="off" />
       </label>
       <label class="select">
         <span class="visually-hidden">Type</span>
-        <select id="type"><option value="">Tous les types</option></select>
+        <select id="type"><option value="">All types</option></select>
       </label>
       <label class="select">
-        <span class="visually-hidden">Rareté</span>
-        <select id="rarity"><option value="">Toutes les raretés</option></select>
+        <span class="visually-hidden">Rarity</span>
+        <select id="rarity"><option value="">All rarities</option></select>
       </label>
-      <label class="toggle"><input id="foil-only" type="checkbox" /> Brillantes</label>
-      <label class="toggle"><input id="duplicates-only" type="checkbox" /> Doublons</label>
-      <label class="toggle"><input id="tradable-only" type="checkbox" /> Échangeables</label>
-      <label class="toggle"><input id="marketable-only" type="checkbox" /> Vendables</label>
-      <button id="clear-filters" class="text-button" type="reset">Effacer les filtres</button>
+      <label class="toggle"><input id="foil-only" type="checkbox" /> Foil</label>
+      <label class="toggle"><input id="duplicates-only" type="checkbox" /> Duplicates</label>
+      <label class="toggle"><input id="tradable-only" type="checkbox" /> Tradable</label>
+      <label class="toggle"><input id="marketable-only" type="checkbox" /> Marketable</label>
+      <button id="clear-filters" class="text-button" type="reset">Clear filters</button>
     </form>
 
     <main class="table-wrap">
@@ -42,17 +42,17 @@
           <tr>
             <th scope="col" class="col-collection"><span class="visually-hidden">Collection</span></th>
             <th scope="col" class="col-icon"><span class="visually-hidden">Image</span></th>
-            <th scope="col" data-sort="name" class="col-name">Nom</th>
-            <th scope="col" data-sort="game" class="col-game">Jeu</th>
+            <th scope="col" data-sort="name" class="col-name">Name</th>
+            <th scope="col" data-sort="game" class="col-game">Game</th>
             <th scope="col" data-sort="type">Type</th>
-            <th scope="col" data-sort="rarity">Rareté</th>
-            <th scope="col" data-sort="foil">Brillante</th>
-            <th scope="col" data-sort="quantity" class="num">Quantité</th>
-            <th scope="col" data-sort="sell" class="num" title="Prix de vente le plus bas">Vente</th>
-            <th scope="col" data-sort="buy" class="num" title="Meilleur prix d'achat (ordre d'achat)">Achat</th>
-            <th scope="col" class="col-prices">Prix relevés</th>
-            <th scope="col" data-sort="tradable" class="flag">Échangeable</th>
-            <th scope="col" data-sort="marketable" class="flag">Vendable</th>
+            <th scope="col" data-sort="rarity">Rarity</th>
+            <th scope="col" data-sort="foil">Foil</th>
+            <th scope="col" data-sort="quantity" class="num">Quantity</th>
+            <th scope="col" data-sort="sell" class="num" title="Lowest sell listing">Sell</th>
+            <th scope="col" data-sort="buy" class="num" title="Highest buy order">Buy</th>
+            <th scope="col" class="col-prices">Prices</th>
+            <th scope="col" data-sort="tradable" class="flag">Tradable</th>
+            <th scope="col" data-sort="marketable" class="flag">Marketable</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>

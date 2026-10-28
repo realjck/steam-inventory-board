@@ -8,6 +8,8 @@ Outil local qui affiche tout mon inventaire communautaire Steam (cartes, fonds, 
 - avec les doublons regroupés ;
 - avec le prix de vente et le prix d'achat de chaque objet, **obtenus à la demande**, ligne par ligne.
 
+**Langue de l'interface : anglais** (textes, formats `en-GB` : « €0.13 », « 2,608 », dates jour/mois en 24 h ; données Steam demandées en `english`).
+
 Usage personnel, lecture seule. Aucune action sur le compte : pas de vente, pas d'échange, pas de login Steam.
 
 ## Périmètre v1
@@ -37,8 +39,8 @@ Usage personnel, lecture seule. Aucune action sur le compte : pas de vente, pas 
   - Rareté.
   - Brillante.
   - Échangeable ou vendable.
-  - « Doublons uniquement » (quantité ≥ 2).
-- **Tri et totaux.** Tri sur toutes les colonnes ; sur une colonne de prix, les objets sans prix sont toujours en fin de liste. Pied de tableau : une seule mention, fixe au défilement horizontal, « 2 608 objets uniques (Total 2 994) » (avec « sur N » quand des filtres masquent des objets). Pas de valeur totale.
+  - « Duplicates » : doublons uniquement (quantité ≥ 2).
+- **Tri et totaux.** Tri sur toutes les colonnes ; sur une colonne de prix, les objets sans prix sont toujours en fin de liste. Pied de tableau : une seule mention, fixe au défilement horizontal, « 2,608 unique items (Total 2,994) » (« 61 of 2,608 unique items (Total 447) » quand des filtres masquent des objets). Pas de valeur totale.
 - **Prix à la demande.** Voir section 2.
 - **Rafraîchissement de l'inventaire.** Un bouton (même icône SVG que le rafraîchissement des prix, sans texte), avec l'horodatage de la dernière mise à jour. Il n'y a pas de rafraîchissement global des prix.
 
@@ -55,7 +57,7 @@ Usage personnel, lecture seule. Aucune action sur le compte : pas de vente, pas 
 ```
 STEAM_ID64=7656119XXXXXXXXXX
 CURRENCY=3          # 3 = EUR
-LANGUAGE=french
+LANGUAGE=english
 MARKET_INTERVAL_MS=3000  # délai minimal entre deux requêtes marché (optionnel)
 PORT=3000                # optionnel
 ```
@@ -68,16 +70,16 @@ L'inventaire doit être **public**.
 
 ### 1. Inventaire
 
-`GET https://steamcommunity.com/inventory/{STEAM_ID64}/753/6?l=french&count=2000`
+`GET https://steamcommunity.com/inventory/{STEAM_ID64}/753/6?l=english&count=2000`
 
 - La réponse contient `assets[]` et `descriptions[]`, liés par `classid` + `instanceid`.
 - **Pagination.** Tant que `more_items` est présent, rappeler l'endpoint avec `start_assetid={last_assetid}`.
 - **Limite.** `count` vaut au maximum 2000 : au-delà, Steam plafonne à 2000 ; à 5000, il répond HTTP 400.
 - **Doublons.** Regrouper les assets par `market_hash_name` (toujours présent ; un même nom peut correspondre à plusieurs `classid`/`instanceid`). Quantité = somme des `amount`.
-- **Filtres.** Les valeurs viennent de `descriptions[].tags[]` ; afficher `localized_tag_name` (déjà en français) :
-  - `item_class` : type (Carte à échanger, Arrière-plan de profil, Émoticône, Booster pack, Gemmes, etc.) ;
-  - `droprate` : rareté (commun, peu commun, rare) ;
-  - `cardborder` : `cardborder_1` (Premium) = brillante ;
+- **Filtres.** Les valeurs viennent de `descriptions[].tags[]` ; afficher `localized_tag_name` (dans la langue de `LANGUAGE`, ici l'anglais) :
+  - `item_class` : type (Trading Card, Profile Background, Emoticon, Booster Pack, Gems, etc.) ;
+  - `droprate` : rareté (Common, Uncommon, Rare ; la couleur de la pastille dépend de ces libellés) ;
+  - `cardborder` : `cardborder_1` (Foil) = brillante ;
   - `Game` : nom du jeu, `internal_name` = `app_{appid}`.
 - **Statut.** `tradable` et `marketable` sont dans `descriptions[]`.
 
@@ -98,9 +100,9 @@ L'inventaire doit être **public**.
 
 **Chargement à la demande uniquement.** Aucun appel au marché n'est fait au démarrage ni en arrière-plan. La cellule de prix d'une ligne a trois états :
 
-- **Jamais chargé.** Un bouton récupère les deux prix pour cet objet uniquement : icône SVG (flèche de téléchargement) suivie du texte « Obtenir les prix ».
-- **En cache.** La cellule affiche les prix, la date de dernière mise à jour (ex. « 0,13 € · 28/10 14:32 ») et un bouton de rafraîchissement : icône SVG (flèche circulaire), sans texte, avec `title` et `aria-label` « Rafraîchir ».
-- **En cours ou en erreur.** Un indicateur de chargement (ou « en attente » si d'autres demandes passent avant), ou un message d'erreur avec possibilité de réessayer.
+- **Jamais chargé.** Un bouton récupère les deux prix pour cet objet uniquement : icône SVG (flèche de téléchargement) suivie du texte « Get prices ».
+- **En cache.** La cellule affiche les prix, la date de dernière mise à jour (ex. « €0.13 » et « 28/10 14:32 ») et un bouton de rafraîchissement : icône SVG (flèche circulaire), sans texte, avec `title` et `aria-label` « Refresh prices ».
+- **En cours ou en erreur.** Un indicateur de chargement « Loading » (ou « Queued » si d'autres demandes passent avant), ou un message d'erreur avec possibilité de réessayer.
 
 Les prix en cache s'affichent dès le démarrage. Si un prix est vieux, c'est la date affichée qui le signale.
 
@@ -142,7 +144,7 @@ Les prix en cache s'affichent dès le démarrage. Si un prix est vieux, c'est la
 - Au second lancement, le tableau s'affiche en moins de 2 s depuis le cache.
 - Aucun appel au marché sans clic de l'utilisateur.
 - Le filtre « doublons » liste exactement les objets dont la quantité est ≥ 2.
-- Cliquer rapidement sur le bouton « Obtenir les prix » de 20 lignes n'envoie jamais deux requêtes marché à moins de 3 s d'intervalle, et aucun 429 n'est laissé sans gestion.
+- Cliquer rapidement sur le bouton « Get prices » de 20 lignes n'envoie jamais deux requêtes marché à moins de 3 s d'intervalle, et aucun 429 n'est laissé sans gestion.
 - Les prix sont affichés en euros, avec la date de dernière mise à jour par ligne.
 - Des prix obtenus au clic sont toujours présents, avec leur date, après redémarrage.
 - La recherche « Portal » trouve tous les objets du jeu Portal.

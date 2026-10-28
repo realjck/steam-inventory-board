@@ -28,7 +28,7 @@ function collectionCell(item: Item, steamId: string): HTMLTableCellElement {
   link.href = url;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
-  link.title = `Voir ma collection ${item.game ?? ""}`.trim();
+  link.title = item.game ? `Open my ${item.game} badge page` : "Open my badge page";
   link.ariaLabel = link.title;
   link.innerHTML = COLLECTION_ICON;
   td.append(link);
@@ -58,7 +58,7 @@ function nameCell(item: Item): HTMLTableCellElement {
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   link.textContent = item.name;
-  link.title = "Voir sur le marché Steam";
+  link.title = "View on the Steam Community Market";
   td.append(link);
   return td;
 }
@@ -79,7 +79,7 @@ function foilCell(foil: boolean): HTMLTableCellElement {
   if (foil) {
     const chip = document.createElement("span");
     chip.className = "foil";
-    chip.textContent = "Brillante";
+    chip.textContent = "Foil";
     td.append(chip);
   }
   return td;
@@ -90,7 +90,7 @@ function flagCell(value: boolean): HTMLTableCellElement {
   td.innerHTML = value ? CHECK_ICON : "–";
   const hidden = document.createElement("span");
   hidden.className = "visually-hidden";
-  hidden.textContent = value ? "oui" : "non";
+  hidden.textContent = value ? "yes" : "no";
   td.append(hidden);
   return td;
 }

@@ -25,7 +25,7 @@ function readInteger(name: string, fallback: number): number {
 }
 
 const steamId = readSteamId();
-const language = process.env.LANGUAGE ?? "french";
+const language = process.env.LANGUAGE ?? "english";
 const port = readInteger("PORT", 3000);
 const currency = readInteger("CURRENCY", 3);
 const queue = new MarketQueue({

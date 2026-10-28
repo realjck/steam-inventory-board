@@ -1,5 +1,8 @@
 /** Display helpers shared by the table and the header. */
 
+/** British English: English words with day-first dates and a 24-hour clock. */
+const LOCALE = "en-GB";
+
 export function marketUrl(marketHashName: string): string {
   return `https://steamcommunity.com/market/listings/753/${encodeURIComponent(marketHashName)}`;
 }
@@ -13,37 +16,36 @@ export function collectionUrl(steamId: string, appId: number | null): string | n
   return `https://steamcommunity.com/profiles/${steamId}/gamecards/${appId}`;
 }
 
-/** "28/10/2026 à 17:09"; the time zone defaults to the browser's. */
+/** "28/10/2026 at 17:09"; the time zone defaults to the browser's. */
 export function formatFetchedAt(iso: string, timeZone?: string): string {
   const date = new Date(iso);
-  const day = new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeZone }).format(date);
-  const time = new Intl.DateTimeFormat("fr-FR", { timeStyle: "short", timeZone }).format(date);
-  return `${day} à ${time}`;
+  const day = new Intl.DateTimeFormat(LOCALE, { dateStyle: "short", timeZone }).format(date);
+  const time = new Intl.DateTimeFormat(LOCALE, { timeStyle: "short", timeZone }).format(date);
+  return `${day} at ${time}`;
 }
 
-/** Barlow lacks the narrow no-break space fr-FR uses between thousands, so use a regular one. */
 export function formatCount(n: number): string {
-  return n.toLocaleString("fr-FR").replace(/\u202f/g, "\u00a0");
+  return n.toLocaleString(LOCALE);
 }
 
-const euros = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+const euros = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "EUR" });
 
-/** Cents to "0,13 €" (Steam prices are integers in cents). */
+/** Cents to "€0.13" (Steam prices are integers in cents). */
 export function formatPrice(cents: number): string {
-  return euros.format(cents / 100).replace(/\u202f/g, "\u00a0");
+  return euros.format(cents / 100);
 }
 
 /** "28/10 14:32", for the per-row price date. */
 export function formatShortDate(iso: string, timeZone?: string): string {
   const date = new Date(iso);
-  const day = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", timeZone }).format(date);
-  const time = new Intl.DateTimeFormat("fr-FR", { timeStyle: "short", timeZone }).format(date);
+  const day = new Intl.DateTimeFormat(LOCALE, { day: "2-digit", month: "2-digit", timeZone }).format(date);
+  const time = new Intl.DateTimeFormat(LOCALE, { timeStyle: "short", timeZone }).format(date);
   return `${day} ${time}`;
 }
 
-/** Footer summary: "2 608 objets uniques (Total 2 994)", with "sur N" when filters hide items. */
+/** Footer summary: "2,608 unique items (Total 2,994)", or "61 of 2,608 unique items" when filters hide items. */
 export function formatTotals(rows: number, quantity: number, allRows: number): string {
-  const noun = rows === 1 ? "objet unique" : "objets uniques";
-  const outOf = rows === allRows ? "" : ` sur ${formatCount(allRows)}`;
-  return `${formatCount(rows)} ${noun}${outOf} (Total ${formatCount(quantity)})`;
+  const total = `(Total ${formatCount(quantity)})`;
+  if (rows !== allRows) return `${formatCount(rows)} of ${formatCount(allRows)} unique items ${total}`;
+  return `${formatCount(rows)} ${rows === 1 ? "unique item" : "unique items"} ${total}`;
 }

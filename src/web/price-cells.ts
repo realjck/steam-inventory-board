@@ -57,19 +57,19 @@ function controlCell(item: BoardItem, state: PriceState): HTMLTableCellElement {
   if (state.status === "loading") {
     const spinner = statusText("", "spinner");
     spinner.innerHTML = REFRESH_ICON;
-    td.append(spinner, statusText("En cours", "price-status"));
+    td.append(spinner, statusText("Loading", "price-status"));
   } else if (state.status === "queued") {
-    td.append(statusText("En attente", "price-status"));
+    td.append(statusText("Queued", "price-status"));
   } else if (state.status === "error") {
-    td.append(statusText(state.message, "price-error"), priceButton(REFRESH_ICON, "Réessayer"));
+    td.append(statusText(state.message, "price-error"), priceButton(REFRESH_ICON, "Retry"));
   } else if (item.prices) {
     const date = document.createElement("time");
     date.dateTime = item.prices.fetchedAt;
-    date.title = `Prix du ${formatFetchedAt(item.prices.fetchedAt)}`;
+    date.title = `Prices from ${formatFetchedAt(item.prices.fetchedAt)}`;
     date.textContent = formatShortDate(item.prices.fetchedAt);
-    td.append(date, priceButton(REFRESH_ICON, "Rafraîchir les prix"));
+    td.append(date, priceButton(REFRESH_ICON, "Refresh prices"));
   } else {
-    td.append(labelledPriceButton(DOWNLOAD_ICON, "Obtenir les prix"));
+    td.append(labelledPriceButton(DOWNLOAD_ICON, "Get prices"));
   }
   return td;
 }

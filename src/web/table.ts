@@ -39,7 +39,7 @@ const SORT_VALUES: Record<SortKey, (item: Item) => SortValue> = {
   marketable: (i) => i.marketable,
 };
 
-const collator = new Intl.Collator("fr", { sensitivity: "base", numeric: true });
+const collator = new Intl.Collator("en", { sensitivity: "base", numeric: true });
 
 /** Lowercases and strips accents so "sol" finds "Sól". */
 export function normalize(text: string): string {

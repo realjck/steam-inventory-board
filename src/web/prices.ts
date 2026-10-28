@@ -14,5 +14,5 @@ export function priceStatuses(pending: string[]): Map<string, "loading" | "queue
 }
 
 export function describePriceError(status: number, message: string): string {
-  return status === 503 ? "Steam limite les requêtes, réessayez plus tard" : `Échec : ${message}`;
+  return status === 503 ? "Steam is rate limiting requests, try again later" : `Failed: ${message}`;
 }

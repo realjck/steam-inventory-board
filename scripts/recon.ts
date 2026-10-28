@@ -7,7 +7,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 
 const STEAM_ID64 = requireEnv("STEAM_ID64");
 const CURRENCY = process.env.CURRENCY ?? "3";
-const LANGUAGE = process.env.LANGUAGE ?? "french";
+const LANGUAGE = process.env.LANGUAGE ?? "english";
 
 const SAMPLES_DIR = "samples";
 const DELAY_MS = 3000;

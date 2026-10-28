@@ -59,7 +59,7 @@ function readFilters(): Filters {
 
 function fillSelect(select: HTMLSelectElement, values: (string | null)[]): void {
   const distinct = [...new Set(values.filter((v): v is string => v !== null))];
-  distinct.sort(new Intl.Collator("fr").compare);
+  distinct.sort(new Intl.Collator("en").compare);
   select.length = 1;
   for (const value of distinct) select.add(new Option(value, value));
 }
@@ -69,8 +69,8 @@ function renderEmpty(visible: Item[]): void {
   if (visible.length > 0) return;
   els.empty.textContent =
     state.items.length === 0
-      ? "Aucun inventaire en cache. Le bouton de rafraîchissement, en haut à droite, le charge depuis Steam."
-      : "Aucun objet ne correspond à ces filtres.";
+      ? "No inventory cached yet. The refresh button at the top right loads it from Steam."
+      : "No items match these filters.";
 }
 
 function render(): void {
@@ -122,7 +122,7 @@ async function requestPrices(hash: string): Promise<void> {
     if (!res.ok) state.priceErrors.set(hash, describePriceError(res.status, body.error));
     else state.items = state.items.map((i) => (i.marketHashName === hash ? (body as Item) : i));
   } catch {
-    state.priceErrors.set(hash, "Le serveur local ne répond pas");
+    state.priceErrors.set(hash, "The local server is not responding");
   }
   state.pendingPrices = state.pendingPrices.filter((h) => h !== hash);
   updateRows([hash, ...state.pendingPrices]);
@@ -142,7 +142,7 @@ function setInventory(inventory: Inventory): void {
   state.rows = new Map(inventory.items.map((item) => [item.marketHashName, createRow(item, priceStateOf(item.marketHashName), state.steamId)]));
   fillSelect(els.type, inventory.items.map((i) => i.type));
   fillSelect(els.rarity, inventory.items.map((i) => i.rarity));
-  els.fetchedAt.textContent = inventory.fetchedAt ? `Inventaire du ${formatFetchedAt(inventory.fetchedAt)}` : "";
+  els.fetchedAt.textContent = inventory.fetchedAt ? `Inventory from ${formatFetchedAt(inventory.fetchedAt)}` : "";
   state.filters = readFilters();
   render();
 }
@@ -163,7 +163,7 @@ async function refreshInventory(): Promise<void> {
     if (res.ok) setInventory(body as Inventory);
     else showSyncError(describeInventoryError(body.reason, body.error, hasCache));
   } catch {
-    showSyncError(describeInventoryError("unavailable", "le serveur local ne répond pas", hasCache));
+    showSyncError(describeInventoryError("unavailable", "the local server is not responding", hasCache));
   } finally {
     els.refresh.disabled = false;
     els.refresh.removeAttribute("aria-busy");
@@ -235,7 +235,7 @@ async function start(): Promise<void> {
     const res = await fetch("/api/items");
     setInventory((await res.json()) as Inventory);
   } catch {
-    showSyncError("Le serveur local ne répond pas. Relancez-le avec npm start.");
+    showSyncError("The local server is not responding. Restart it with npm start.");
   }
 }
 

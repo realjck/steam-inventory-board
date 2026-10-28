@@ -411,11 +411,11 @@ td.flag svg {
   vertical-align: 1px;
 }
 
-.rarity[data-rarity="peu commun"]::before {
+.rarity[data-rarity="Uncommon"]::before {
   background: var(--uncommon);
 }
 
-.rarity[data-rarity="rare"]::before {
+.rarity[data-rarity="Rare"]::before {
   background: var(--rare);
 }
 

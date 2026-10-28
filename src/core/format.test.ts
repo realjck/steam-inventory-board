@@ -20,9 +20,10 @@ test("formatCount groups thousands with commas", () => {
   assert.equal(formatCount(42), "42");
 });
 
-test("formatPrice renders cents as euros", () => {
-  assert.equal(formatPrice(13), "€0.13");
-  assert.equal(formatPrice(123456), "€1,234.56");
+test("formatPrice renders cents in the Steam currency", () => {
+  assert.equal(formatPrice(13, 3), "€0.13");
+  assert.equal(formatPrice(123456, 3), "€1,234.56");
+  assert.equal(formatPrice(13, 1), "US$0.13");
 });
 
 test("formatShortDate renders day, month and time", () => {

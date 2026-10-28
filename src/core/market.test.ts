@@ -20,7 +20,7 @@ function fakeFetch(body: string, status = 200) {
 test("fetchOrderBook calls the market order book query action", async () => {
   const { fn, calls } = fakeFetch(book({ amtMinSellOrder: 13, amtMaxBuyOrder: 12 }));
 
-  await fetchOrderBook("281750-Sól", EUR, fn);
+  await fetchOrderBook("281750-Sól", fn);
 
   const url = new URL(calls[0].url);
   assert.equal(url.origin + url.pathname, "https://steamcommunity.com/market/orderbook");
@@ -32,31 +32,37 @@ test("fetchOrderBook calls the market order book query action", async () => {
 test("fetchOrderBook returns the lowest sell and highest buy prices in cents", async () => {
   const { fn } = fakeFetch(book({ amtMinSellOrder: 13, amtMaxBuyOrder: 12 }));
 
-  assert.deepEqual(await fetchOrderBook("x", EUR, fn), { sell: 13, buy: 12 });
+  assert.deepEqual(await fetchOrderBook("x", fn), { sell: 13, buy: 12, currency: EUR });
 });
 
 test("fetchOrderBook reports a missing side of the book as null", async () => {
   const { fn } = fakeFetch(book({ amtMinSellOrder: 0 }));
 
-  assert.deepEqual(await fetchOrderBook("x", EUR, fn), { sell: null, buy: null });
+  assert.deepEqual(await fetchOrderBook("x", fn), { sell: null, buy: null, currency: EUR });
 });
 
-test("fetchOrderBook rejects prices in another currency", async () => {
+test("fetchOrderBook returns the currency Steam used", async () => {
   const { fn } = fakeFetch(book({ eCurrency: 1, amtMinSellOrder: 4 }));
 
-  await assert.rejects(fetchOrderBook("x", EUR, fn), /currency 1.*expected 3/);
+  assert.equal((await fetchOrderBook("x", fn)).currency, 1);
+});
+
+test("fetchOrderBook rejects a currency it cannot display", async () => {
+  const { fn } = fakeFetch(book({ eCurrency: 999, amtMinSellOrder: 4 }));
+
+  await assert.rejects(fetchOrderBook("x", fn), /unsupported currency 999/);
 });
 
 test("fetchOrderBook raises RateLimitError on HTTP 429", async () => {
   const { fn } = fakeFetch("", 429);
 
-  await assert.rejects(fetchOrderBook("x", EUR, fn), RateLimitError);
+  await assert.rejects(fetchOrderBook("x", fn), RateLimitError);
 });
 
 test("fetchOrderBook rejects other HTTP errors and unsuccessful answers", async () => {
-  await assert.rejects(fetchOrderBook("x", EUR, fakeFetch("", 500).fn), /HTTP 500/);
+  await assert.rejects(fetchOrderBook("x", fakeFetch("", 500).fn), /HTTP 500/);
   await assert.rejects(
-    fetchOrderBook("x", EUR, fakeFetch(JSON.stringify({ data: { success: false } })).fn),
+    fetchOrderBook("x", fakeFetch(JSON.stringify({ data: { success: false } })).fn),
     /no order book/,
   );
 });

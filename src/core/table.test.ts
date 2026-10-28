@@ -89,7 +89,7 @@ test("sortItems does not mutate its input", () => {
   assert.deepEqual(names(items), ["b", "a"]);
 });
 
-const priced = (sell: number | null, buy: number | null = null): Prices => ({ sell, buy, fetchedAt: "2026-10-28T14:32:00.000Z" });
+const priced = (sell: number | null, buy: number | null = null): Prices => ({ sell, buy, currency: 3, fetchedAt: "2026-10-28T14:32:00.000Z" });
 
 test("sortItems orders by sell or buy price, unpriced items last", () => {
   const items = [

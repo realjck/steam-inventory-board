@@ -1,5 +1,5 @@
 /** Price cells of a row: sell, buy, and the fetch/refresh control with its state. */
-import type { BoardItem } from "../core/items.ts";
+import type { BoardItem, Prices } from "../core/items.ts";
 import { DOWNLOAD_ICON, REFRESH_ICON } from "./icons.ts";
 import { formatFetchedAt, formatPrice, formatShortDate } from "../core/format.ts";
 import type { PriceState } from "../core/prices.ts";
@@ -11,13 +11,19 @@ function cell(className: string): HTMLTableCellElement {
 }
 
 /** Empty until prices are fetched; "—" once fetched when that side of the order book is empty. */
-function amountCell(cents: number | null | undefined, fetched: boolean): HTMLTableCellElement {
+function amountCell(cents: number | null | undefined, prices: Prices | null): HTMLTableCellElement {
   const td = cell("num");
-  if (cents != null) td.textContent = formatPrice(cents);
-  else if (fetched) {
+  if (cents != null && prices) td.textContent = formatPrice(cents, prices.currency);
+  else if (prices) {
     td.textContent = "—";
     td.classList.add("missing");
   }
+  return td;
+}
+
+function missingCell(): HTMLTableCellElement {
+  const td = cell("num missing");
+  td.textContent = "—";
   return td;
 }
 
@@ -76,12 +82,11 @@ function controlCell(item: BoardItem, state: PriceState): HTMLTableCellElement {
 
 export function priceCells(item: BoardItem, state: PriceState): HTMLTableCellElement[] {
   if (!item.marketable) {
-    return [amountCell(null, true), amountCell(null, true), cell("col-prices")];
+    return [missingCell(), missingCell(), cell("col-prices")];
   }
-  const fetched = item.prices !== null;
   return [
-    amountCell(item.prices?.sell, fetched),
-    amountCell(item.prices?.buy, fetched),
+    amountCell(item.prices?.sell, item.prices),
+    amountCell(item.prices?.buy, item.prices),
     controlCell(item, state),
   ];
 }

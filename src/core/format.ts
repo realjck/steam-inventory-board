@@ -1,4 +1,5 @@
 /** Display helpers shared by the table and the header. */
+import { currencyCode } from "./currency.ts";
 
 /** British English: English words with day-first dates and a 24-hour clock. */
 const LOCALE = "en-GB";
@@ -28,11 +29,11 @@ export function formatCount(n: number): string {
   return n.toLocaleString(LOCALE);
 }
 
-const euros = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "EUR" });
-
-/** Cents to "€0.13" (Steam prices are integers in cents). */
-export function formatPrice(cents: number): string {
-  return euros.format(cents / 100);
+/** Hundredths of the unit to "€0.13"; the currency is a Steam currency id. */
+export function formatPrice(cents: number, currency: number): string {
+  const code = currencyCode(currency);
+  if (code === null) throw new Error(`Unsupported Steam currency ${currency}`);
+  return new Intl.NumberFormat(LOCALE, { style: "currency", currency: code }).format(cents / 100);
 }
 
 /** "28/10 14:32", for the per-row price date. */

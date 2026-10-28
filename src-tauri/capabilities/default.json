@@ -1,0 +1,22 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Cache database, Steam inventory and order book requests, Steam links in the browser",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "sql:default",
+    "sql:allow-execute",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://steamcommunity.com/inventory/*" },
+        { "url": "https://steamcommunity.com/market/orderbook*" }
+      ]
+    },
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://steamcommunity.com/*" }]
+    }
+  ]
+}
